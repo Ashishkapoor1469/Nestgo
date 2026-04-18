@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: Props) {
 
   try {
     const fileContent = fs.readFileSync(filePath, "utf8");
-    const match = fileContent.match(/^---\n([\s\S]*?)\n---/);
+    const match = fileContent.match(/^---\r?\n([\s\S]*?)\r?\n---/);
     if (match) {
       const frontmatterContent = match[1];
       const lines = frontmatterContent.split('\n');
@@ -104,7 +104,7 @@ export default async function DocPage({ params }: Props) {
   let frontmatter: any = {};
   let contentWithoutFrontmatter = fileContent;
   
-  const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
+  const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/;
   const match = fileContent.match(frontmatterRegex);
   
   if (match) {
