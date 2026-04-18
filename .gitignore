@@ -4,11 +4,11 @@
 *.dll
 *.so
 *.dylib
-bin/
-nestgo
-main
-cli.exe
-nestgo.exe
+/bin/
+/nestgo
+/main
+/cli.exe
+/nestgo.exe
 
 # Test binary, executable, and coverage profiles
 *.test
