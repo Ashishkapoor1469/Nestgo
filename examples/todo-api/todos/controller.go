@@ -3,7 +3,7 @@ package todos
 import (
 	"net/http"
 
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // TodoController handles todo HTTP endpoints.

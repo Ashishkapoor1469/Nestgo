@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // Interceptor can transform requests/responses.

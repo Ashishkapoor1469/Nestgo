@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 
-	"github.com/nestgo/nestgo/core"
-	nesthttp "github.com/nestgo/nestgo/http"
-	"github.com/nestgo/nestgo/middleware"
+	"github.com/Ashishkapoor1469/Nestgo/core"
+	nesthttp "github.com/Ashishkapoor1469/Nestgo/http"
+	"github.com/Ashishkapoor1469/Nestgo/middleware"
 
-	"github.com/nestgo/nestgo/examples/todo-api/todos"
+	"github.com/Ashishkapoor1469/Nestgo/examples/todo-api/todos"
 
 	"time"
 )

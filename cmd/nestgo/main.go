@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/nestgo/nestgo/cli/commands"
-	"github.com/nestgo/nestgo/cli/config"
+	"github.com/Ashishkapoor1469/Nestgo/cli/commands"
+	"github.com/Ashishkapoor1469/Nestgo/cli/config"
 	"github.com/spf13/cobra"
 )
 

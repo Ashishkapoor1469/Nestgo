@@ -3,7 +3,7 @@ package todos
 import (
 	"time"
 
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // Todo is the todo entity.

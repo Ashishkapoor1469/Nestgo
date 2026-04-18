@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/nestgo/nestgo/cli/utils"
+	"github.com/Ashishkapoor1469/Nestgo/cli/utils"
 	"github.com/spf13/cobra"
 )
 

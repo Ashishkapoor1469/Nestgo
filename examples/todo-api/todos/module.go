@@ -1,8 +1,8 @@
 package todos
 
 import (
-	"github.com/nestgo/nestgo/common"
-	"github.com/nestgo/nestgo/di"
+	"github.com/Ashishkapoor1469/Nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/di"
 )
 
 // TodosModule is the todos feature module.

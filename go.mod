@@ -1,4 +1,4 @@
-module github.com/nestgo/nestgo
+module github.com/Ashishkapoor1469/Nestgo
 
 go 1.25.5
 

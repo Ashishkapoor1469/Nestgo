@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/nestgo/nestgo/cli/utils"
+	"github.com/Ashishkapoor1469/Nestgo/cli/utils"
 	"github.com/spf13/cobra"
 )
 

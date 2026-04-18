@@ -1,6 +1,6 @@
 package common
 
-import "github.com/nestgo/nestgo/di"
+import "github.com/Ashishkapoor1469/Nestgo/di"
 
 // Module is implemented by all NestGo modules.
 type Module interface {

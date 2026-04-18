@@ -4,7 +4,7 @@ package guards
 import (
 	"strings"
 
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // Guard is the authorization interface.

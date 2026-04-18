@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/nestgo/nestgo/common"
-	"github.com/nestgo/nestgo/di"
-	nesthttp "github.com/nestgo/nestgo/http"
-	"github.com/nestgo/nestgo/middleware"
+	"github.com/Ashishkapoor1469/Nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/di"
+	nesthttp "github.com/Ashishkapoor1469/Nestgo/http"
+	"github.com/Ashishkapoor1469/Nestgo/middleware"
 )
 
 // NestGoApp is the central application container.

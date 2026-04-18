@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // Router wraps chi and provides NestGo routing capabilities.

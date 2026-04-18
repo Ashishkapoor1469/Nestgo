@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/nestgo/nestgo/common"
-	"github.com/nestgo/nestgo/core"
-	"github.com/nestgo/nestgo/di"
+	"github.com/Ashishkapoor1469/Nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/core"
+	"github.com/Ashishkapoor1469/Nestgo/di"
 )
 
 // TestApp provides a test harness for NestGo applications.

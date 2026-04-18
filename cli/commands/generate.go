@@ -8,7 +8,7 @@ import (
 	"text/template"
 	"unicode"
 
-	"github.com/nestgo/nestgo/cli/utils"
+	"github.com/Ashishkapoor1469/Nestgo/cli/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -270,8 +270,8 @@ func toPascalCase(s string) string {
 var moduleTemplate = `package {{.Package}}
 
 import (
-	"github.com/nestgo/nestgo/di"
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/di"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // {{.PascalName}}Module defines the {{.Name}} feature module.
@@ -292,7 +292,7 @@ var controllerTemplate = `package {{.Package}}
 import (
 	"net/http"
 
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // {{.PascalName}}Controller handles HTTP requests for {{.Name}}.
@@ -376,7 +376,7 @@ func {{.PascalName}}Middleware(next http.Handler) http.Handler {
 var guardGenTemplate = `package guards
 
 import (
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // {{.PascalName}}Guard implements authorization.
@@ -397,7 +397,7 @@ func (g *{{.PascalName}}Guard) CanActivate(ctx *common.Context) (bool, error) {
 var interceptorGenTemplate = `package {{.Package}}
 
 import (
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // {{.PascalName}}Interceptor is a custom interceptor.
@@ -422,8 +422,8 @@ func (i *{{.PascalName}}Interceptor) Intercept(ctx *common.Context, next common.
 var resourceModuleTemplate = `package {{.Package}}
 
 import (
-	"github.com/nestgo/nestgo/di"
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/di"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // {{.PascalName}}Module defines the {{.Name}} feature module.
@@ -448,7 +448,7 @@ var resourceControllerTemplate = `package {{.Package}}
 import (
 	"net/http"
 
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // {{.PascalName}}Controller handles HTTP requests for {{.Name}}.
@@ -651,7 +651,7 @@ func (s *{{.PascalName}}Service) Delete(id string) error {
 var resourceDTOTemplate = `package {{.Package}}
 
 import (
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // Create{{.SingularPascal}}DTO is the request body for creating a {{.Singular}}.

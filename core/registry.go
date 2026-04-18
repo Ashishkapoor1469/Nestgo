@@ -3,7 +3,7 @@ package core
 import (
 	"fmt"
 
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // ModuleRegistry manages module registration and initialization.

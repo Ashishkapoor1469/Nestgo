@@ -136,7 +136,7 @@ var goModTemplate = `module {{.ModuleName}}
 go 1.22
 
 require (
-	github.com/nestgo/nestgo v0.1.0
+	github.com/Ashishkapoor1469/Nestgo v0.1.0
 )
 `
 
@@ -145,8 +145,8 @@ var mainTemplate = `package main
 import (
 	"log"
 
-	"github.com/nestgo/nestgo/core"
-	"github.com/nestgo/nestgo/config"
+	"github.com/Ashishkapoor1469/Nestgo/core"
+	"github.com/Ashishkapoor1469/Nestgo/config"
 	"{{.ModuleName}}/internal/modules"
 	appconfig "{{.ModuleName}}/internal/config"
 )
@@ -190,8 +190,8 @@ type AppConfig struct {
 var appModuleTemplate = `package modules
 
 import (
-	"github.com/nestgo/nestgo/di"
-	"github.com/nestgo/nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/di"
+	"github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 // AppModule is the root module of the application.
@@ -350,5 +350,5 @@ go run cmd/server/main.go
 | ` + "`make build`" + ` | Build production binary |
 | ` + "`make test`" + ` | Run tests |
 
-## Built with [NestGo](https://github.com/nestgo/nestgo)
+## Built with [NestGo](https://github.com/Ashishkapoor1469/Nestgo)
 `
