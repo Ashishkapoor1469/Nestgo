@@ -54,20 +54,20 @@ graph TD;
     App --> ModB[Orders Module]
     App --> ModC[Auth Module]
     
-    subgraph Core Engine
+    subgraph Core_Engine
         DI[Dependency Injector]
         Router[HTTP Chi Router]
         Hooks[Lifecycle Hooks]
     end
-    App --> Core Engine
+    App --> Core_Engine
     
-    subgraph Integrated Subsystems
+    subgraph Integrated_Subsystems
         Plugins[Prometheus / OpenTelemetry]
         Events[Sync / Async Event Bus]
         Jobs[Cron / Background Workers]
         WS[WebSocket Real-Time Gateway]
     end
-    App -.-> Integrated Subsystems
+    App -.-> Integrated_Subsystems
 ```
 
 ---
