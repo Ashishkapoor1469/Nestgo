@@ -8,6 +8,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
       items: [
         { label: "Installation", href: "/docs/installation" },
         { label: "Quick Start", href: "/docs/quick-start" },
+        { label: "Building A Simple App", href: "/docs/building-a-simple-app" },
       ]
     },
     {

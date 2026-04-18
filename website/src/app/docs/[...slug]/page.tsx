@@ -56,6 +56,37 @@ interface Props {
   params: Promise<{ slug: string[] }>;
 }
 
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params;
+  const contentDir = path.join(process.cwd(), "src", "content", "docs");
+  const slugPath = slug ? slug.join("/") : "installation";
+  const filePath = path.join(contentDir, `${slugPath}.mdx`);
+
+  try {
+    const fileContent = fs.readFileSync(filePath, "utf8");
+    const match = fileContent.match(/^---\n([\s\S]*?)\n---/);
+    if (match) {
+      const frontmatterContent = match[1];
+      const lines = frontmatterContent.split('\n');
+      let title = "Docs";
+      let description = "NestGo Documentation";
+      lines.forEach(line => {
+        const [key, value] = line.split(':').map(s => s.trim());
+        if (key === "title" && value) title = value.replace(/^["']|["']$/g, '');
+        if (key === "description" && value) description = value.replace(/^["']|["']$/g, '');
+      });
+      return { title: `${title} | NestGo Docs`, description };
+    }
+  } catch (error) {
+    // Ignore error, will fallback
+  }
+  
+  return {
+    title: "NestGo Documentation",
+    description: "NestGo comprehensive docs."
+  };
+}
+
 export default async function DocPage({ params }: Props) {
   const { slug } = await params;
   const contentDir = path.join(process.cwd(), "src", "content", "docs");

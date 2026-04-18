@@ -1,0 +1,234 @@
+---
+title: "Building A Simple App"
+description: "A complete end-to-end tutorial on building a REST API with NestGo."
+---
+
+# Building A Simple App
+
+In this tutorial, we will walk through the creation of a simple application equipped with a robust mock authentication system. This will demonstrate how NestGo handles dependency injection natively, how to structure modules, controllers, providers securely using Guards.
+
+## Prerequisites
+
+Ensure you've installed NestGo and bootstrapped a blank application via the CLI:
+
+```bash
+nestgo new sample-app
+cd sample-app
+```
+
+## The Architecture Overview
+
+A standard structured module in NestGo includes a Controller (to handle routes), a Service (for business logic), and optionally Guards (for protection) bundled into a Module.
+
+We are going to build an **Auth Module** that implements:
+1. `AuthService`: Generates mock access tokens.
+2. `AuthController`: Exposes a `/login` route to issue a token, and a `/profile` route that returns user info.
+3. `AuthGuard`: Secures the `/profile` route to reject unauthorized requests.
+
+---
+
+## 1. The Auth Service (Business Logic)
+First, let's build the `AuthService` inside `internal/modules/auth/auth_service.go`. This service manages the core credentials verification logic.
+
+```go
+package auth
+
+import "errors"
+
+// AuthService handles authentication business logic.
+// In NestGo, services are typically injected as providers into controllers.
+type AuthService struct{}
+
+func NewAuthService() *AuthService {
+	return &AuthService{}
+}
+
+// LoginDTO represents the JSON payload expected for the login route.
+type LoginDTO struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// Login verifies credentials and returns a token.
+func (s *AuthService) Login(username, password string) (string, error) {
+	if username == "admin" && password == "password123" {
+		return "mock-super-secret-token", nil
+	}
+	return "", errors.New("invalid credentials")
+}
+```
+
+> **Note:** Because this relies on zero dependencies, the factory `NewAuthService` requires zero arguments.
+
+---
+
+## 2. The Auth Guard (Security)
+To ensure that only registered and active clients visit our protected endpoints, we build an `AuthGuard` under `internal/modules/auth/auth_guard.go`.
+
+```go
+package auth
+
+import (
+	"strings"
+	"github.com/Ashishkapoor1469/Nestgo/common"
+)
+
+type AuthGuard struct{}
+
+func NewAuthGuard() *AuthGuard {
+	return &AuthGuard{}
+}
+
+// CanActivate evaluates if the current request is allowed to proceed.
+func (g *AuthGuard) CanActivate(ctx *common.Context) (bool, error) {
+	authHeader := ctx.Header("Authorization")
+	
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		return false, common.Unauthorized("Missing or invalid authorization token")
+	}
+
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+
+	if token != "mock-super-secret-token" {
+		return false, common.Unauthorized("Invalid token")
+	}
+
+	// We append user metadata onto the context, allowing upstream routes downstream access!
+	ctx.Set("user_id", "user-123")
+	
+	return true, nil
+}
+```
+
+---
+
+## 3. The Auth Controller (Routing)
+Now we construct the Controller under `internal/modules/auth/auth_controller.go` to handle inbound routing traffic.
+
+```go
+package auth
+
+import (
+	"net/http"
+	"github.com/Ashishkapoor1469/Nestgo/common"
+)
+
+type AuthController struct {
+	authService *AuthService // This will be injected by DI!
+}
+
+// NewAuthController acts as a provider factory function.
+func NewAuthController(authService *AuthService) *AuthController {
+	return &AuthController{
+		authService: authService,
+	}
+}
+
+func (c *AuthController) Prefix() string {
+	return "/auth"
+}
+
+func (c *AuthController) Routes() []common.Route {
+	return []common.Route{
+		{
+			Method:  http.MethodPost,
+			Path:    "/login",
+			Handler: c.login,
+		},
+		{ // Protected Route
+			Method:  http.MethodGet,
+			Path:    "/profile",
+			Handler: c.profile,
+			Guards:  []common.Guard{NewAuthGuard()}, // Apply guard here!
+		},
+	}
+}
+
+func (c *AuthController) login(ctx *common.Context) error {
+	var dto LoginDTO
+	if err := ctx.Bind(&dto); err != nil {
+		return common.BadRequest("invalid payload")
+	}
+
+	token, err := c.authService.Login(dto.Username, dto.Password)
+	if err != nil {
+		return common.Unauthorized(err.Error())
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"token": token,
+	})
+}
+
+func (c *AuthController) profile(ctx *common.Context) error {
+	// The Guard saved the user_id into the request context.
+	userIDVal, _ := ctx.Get("user_id")
+	userID, _ := userIDVal.(string)
+
+	return ctx.Success(map[string]any{
+		"id":       userID,
+		"username": "admin",
+	})
+}
+```
+
+---
+
+## 4. Constructing The Module (`auth_module.go`)
+Once our atomic components exist, we stitch them together in the DI container. Provide your custom Controller instance along with the underlying Providers.
+
+```go
+package auth
+
+import (
+	"github.com/Ashishkapoor1469/Nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/di"
+)
+
+type AuthModule struct{}
+
+func (m *AuthModule) Module() common.ModuleConfig {
+	authService := NewAuthService()
+	authController := NewAuthController(authService)
+
+	return common.ModuleConfig{
+		Name: "auth",
+		Controllers: []common.Controller{
+			authController,
+		},
+		Providers: []di.Provider{
+			{Instance: authService},
+		},
+	}
+}
+```
+
+---
+
+## 5. Wrapping It All Together
+Register your newly minted `auth.AuthModule` inside `internal/modules/app_module.go`.
+
+```go
+package modules
+
+import (
+	"github.com/Ashishkapoor1469/Nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/di"
+	"github.com/sample-app/internal/modules/auth"
+)
+
+type AppModule struct{}
+
+func (m *AppModule) Module() common.ModuleConfig {
+	return common.ModuleConfig{
+		Name:        "app",
+		Imports: []common.Module{
+			&auth.AuthModule{},
+		},
+		Controllers: []common.Controller{},
+		Providers:   []di.Provider{},
+	}
+}
+```
+
+Now, fire up the application with `go run ./cmd/server` or `nestgo dev`. You've successfully built a modular architecture mimicking exactly what large scale NestGo projects look like with the core design ethos completely intact!
