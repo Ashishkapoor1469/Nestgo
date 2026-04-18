@@ -39,7 +39,7 @@ export function Hero() {
     <section 
       className="relative min-h-screen w-full flex items-center justify-center overflow-hidden pt-16 pb-32 md:pt-20 md:pb-40 bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: "url('/bg.png')",
+        backgroundImage: "url('/bg.webp')",
         backgroundAttachment: 'fixed',
       }}
     >
