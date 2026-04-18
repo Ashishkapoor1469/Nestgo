@@ -7,7 +7,7 @@
   
   <p>
     <a href="https://golang.org/doc/devel/release.html"><img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=for-the-badge&logo=go" alt="Go Version" /></a>
-    <a href="https://github.com/nestgo/nestgo"><img src="https://img.shields.io/badge/Architecture-Modular-05122A?style=for-the-badge&logo=codeigniter" alt="Architecture" /></a>
+    <a href="https://github.com/Ashishkapoor1469/Nestgo"><img src="https://img.shields.io/badge/Architecture-Modular-05122A?style=for-the-badge&logo=codeigniter" alt="Architecture" /></a>
     <a href="https://github.com/go-chi/chi"><img src="https://img.shields.io/badge/Router-Chi-E34F26?style=for-the-badge&logo=databricks" alt="Powered by Chi" /></a>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-success?style=for-the-badge" alt="License" /></a>
   </p>
@@ -78,7 +78,7 @@ graph TD;
 The heart of the developer experience is the CLI. Grab it globally:
 
 ```bash
-go install github.com/nestgo/nestgo/cmd/nestgo@latest
+go install github.com/Ashishkapoor1469/Nestgo/cmd/nestgo@latest
 ```
 
 The CLI natively integrates with your shell. Enable autocompletions for extreme speed:
@@ -114,7 +114,7 @@ Controllers in NestGo implement a simple interface. They define paths and regist
 
 ```go
 import (
-    "github.com/nestgo/nestgo/common"
+    "github.com/Ashishkapoor1469/Nestgo/common"
 )
 
 type UserController struct {
@@ -156,8 +156,8 @@ Modules form the boundaries of your architecture, wrapping up controllers and se
 
 ```go
 import (
-    "github.com/nestgo/nestgo/common"
-    "github.com/nestgo/nestgo/di"
+    "github.com/Ashishkapoor1469/Nestgo/common"
+    "github.com/Ashishkapoor1469/Nestgo/di"
 )
 
 type UsersModule struct{}
