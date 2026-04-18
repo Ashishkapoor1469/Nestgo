@@ -7,7 +7,7 @@
   
   <p>
     <a href="https://golang.org/doc/devel/release.html"><img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=for-the-badge&logo=go" alt="Go Version" /></a>
-    <a href="https://github.com/nestgo/framework"><img src="https://img.shields.io/badge/Architecture-Modular-05122A?style=for-the-badge&logo=codeigniter" alt="Architecture" /></a>
+    <a href="https://github.com/nestgo/nestgo"><img src="https://img.shields.io/badge/Architecture-Modular-05122A?style=for-the-badge&logo=codeigniter" alt="Architecture" /></a>
     <a href="https://github.com/go-chi/chi"><img src="https://img.shields.io/badge/Router-Chi-E34F26?style=for-the-badge&logo=databricks" alt="Powered by Chi" /></a>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-success?style=for-the-badge" alt="License" /></a>
   </p>
@@ -74,12 +74,19 @@ graph TD;
 
 ## 🚀 Quick Start
 
-### 1. Install the CLI Tool
+### 1. Install the CLI Architecture Globally
 The heart of the developer experience is the CLI. Grab it globally:
 
 ```bash
-go install github.com/nestgo/framework/cli/main.go@latest
-mv $GOPATH/bin/main $GOPATH/bin/nestgo
+go install github.com/nestgo/nestgo/cmd/nestgo@latest
+```
+
+The CLI natively integrates with your shell. Enable autocompletions for extreme speed:
+```bash
+# Add to your shell profile (~/.bashrc, ~/.zshrc)
+source <(nestgo completion bash)
+# OR
+source <(nestgo completion zsh)
 ```
 
 ### 2. Scaffold Your Next Big Idea
@@ -106,6 +113,10 @@ nestgo generate resource products
 Controllers in NestGo implement a simple interface. They define paths and register route definitions explicitly to avoid reflection lookups.
 
 ```go
+import (
+    "github.com/nestgo/nestgo/common"
+)
+
 type UserController struct {
     service *UserService // Automatically injected!
 }
@@ -114,14 +125,14 @@ func (c *UserController) Prefix() string {
     return "/users"
 }
 
-func (c *UserController) Routes() []nesthttp.Route {
-    return []nesthttp.Route{
+func (c *UserController) Routes() []common.Route {
+    return []common.Route{
         {Method: "GET", Path: "/", Handler: c.FindAll},
         {Method: "POST", Path: "/", Handler: c.Create},
     }
 }
 
-func (c *UserController) FindAll(ctx *nesthttp.Context) error {
+func (c *UserController) FindAll(ctx *common.Context) error {
     return ctx.Paginated(c.service.GetUsers()) // Fluent context API
 }
 ```
@@ -144,15 +155,20 @@ func NewUserService(db *database.Client) *UserService {
 Modules form the boundaries of your architecture, wrapping up controllers and services to expose them safely to the Application container.
 
 ```go
+import (
+    "github.com/nestgo/nestgo/common"
+    "github.com/nestgo/nestgo/di"
+)
+
 type UsersModule struct{}
 
-func (m *UsersModule) Module() modules.ModuleConfig {
+func (m *UsersModule) Module() common.ModuleConfig {
     service := NewUserService()
     controller := NewUserController(service)
 
-    return modules.ModuleConfig{
+    return common.ModuleConfig{
         Name:        "users",
-        Controllers: []modules.ControllerDefinition{controller},
+        Controllers: []common.Controller{controller},
         Providers: []di.Provider{
             {Instance: service},
         },

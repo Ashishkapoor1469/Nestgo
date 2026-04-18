@@ -8,6 +8,7 @@ import (
 	"text/template"
 	"unicode"
 
+	"github.com/nestgo/nestgo/cli/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -112,6 +113,8 @@ func generateResourceCmd() *cobra.Command {
 
 // generateComponent generates a single component file.
 func generateComponent(componentType, name string) error {
+	utils.EnsureProjectContext("generate " + componentType)
+
 	name = strings.ToLower(name)
 	pascal := toPascalCase(name)
 
@@ -176,6 +179,8 @@ func generateComponent(componentType, name string) error {
 
 // generateResource generates a complete CRUD resource.
 func generateResource(name string) error {
+	utils.EnsureProjectContext("generate resource")
+
 	name = strings.ToLower(name)
 	pascal := toPascalCase(name)
 	singular := strings.TrimSuffix(name, "s")
@@ -186,7 +191,7 @@ func generateResource(name string) error {
 		return err
 	}
 
-	fmt.Printf("\n🔧 Generating resource: %s\n\n", name)
+	utils.PrintSuccess(fmt.Sprintf("Generating resource: %s", name))
 
 	data := map[string]string{
 		"Name":           name,
@@ -213,7 +218,7 @@ func generateResource(name string) error {
 		fmt.Printf("  📄 Created %s\n", filePath)
 	}
 
-	fmt.Printf("\n✅ Resource %s generated successfully!\n", name)
+	utils.PrintSuccess(fmt.Sprintf("Resource %s generated successfully!", name))
 	fmt.Printf("   Don't forget to import the module in your app module.\n\n")
 	return nil
 }

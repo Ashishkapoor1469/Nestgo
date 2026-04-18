@@ -1,0 +1,49 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+nestgo
+main
+cli.exe
+nestgo.exe
+
+# Test binary, executable, and coverage profiles
+*.test
+coverage.out
+coverage.html
+*.prof
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project generated artifacts
+migrations/*.sql.tmp
+node_modules/
+dist/
+
+# Dependency directories (although Go modules handle this, occasionally vendors are ignored if not committed)
+# vendor/

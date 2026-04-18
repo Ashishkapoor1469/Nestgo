@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/nestgo/nestgo/cli/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -44,6 +45,7 @@ func MigrateCmd() *cobra.Command {
 			Use:   "up",
 			Short: "Run all pending migrations",
 			RunE: func(cmd *cobra.Command, args []string) error {
+				utils.EnsureProjectContext("migrate up")
 				fmt.Println("⬆️  Running migrations...")
 				fmt.Println("   (Implement by calling your migration runner)")
 				return nil
@@ -53,6 +55,7 @@ func MigrateCmd() *cobra.Command {
 			Use:   "down",
 			Short: "Rollback the last migration",
 			RunE: func(cmd *cobra.Command, args []string) error {
+				utils.EnsureProjectContext("migrate down")
 				fmt.Println("⬇️  Rolling back last migration...")
 				return nil
 			},
@@ -71,6 +74,7 @@ func MigrateCmd() *cobra.Command {
 }
 
 func runDoctor(cmd *cobra.Command, args []string) error {
+	utils.EnsureProjectContext("doctor")
 	fmt.Println("\n🩺 NestGo Doctor — Project Health Check")
 
 	issues := 0
@@ -208,6 +212,7 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 }
 
 func runGraph(cmd *cobra.Command, args []string) error {
+	utils.EnsureProjectContext("graph")
 	fmt.Println("\n📊 Module Dependency Graph")
 
 	modules := findModules()
@@ -238,6 +243,7 @@ func runGraph(cmd *cobra.Command, args []string) error {
 }
 
 func createMigration(name string) error {
+	utils.EnsureProjectContext("migrate create " + name)
 	dir := "migrations"
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err

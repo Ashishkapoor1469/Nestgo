@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/nestgo/nestgo/cli/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -35,6 +36,7 @@ func BuildCmd() *cobra.Command {
 }
 
 func runDev(cmd *cobra.Command, args []string) error {
+	utils.EnsureProjectContext("dev")
 	fmt.Println("\n🔥 NestGo Dev Server — Hot Reload Mode")
 
 	// Find the main entry point.
@@ -135,6 +137,7 @@ func runDev(cmd *cobra.Command, args []string) error {
 }
 
 func runBuild(cmd *cobra.Command, args []string) error {
+	utils.EnsureProjectContext("build")
 	output, _ := cmd.Flags().GetString("output")
 
 	fmt.Println("\n🔨 Building NestGo application...")
