@@ -1,0 +1,219 @@
+---
+title: "Authorization (RBAC)"
+description: "Role-based access control implementation in NestGo."
+---
+
+# Authorization (RBAC)
+
+NestGo provides permission-based authorization with role hierarchy and resource-based access control.
+
+## Permission-based Authorization
+
+```go title="rbac/permissions.go"
+package rbac
+
+type Permission string
+
+const (
+    PermissionReadUser   Permission = "user:read"
+    PermissionWriteUser  Permission = "user:write"
+    PermissionDeleteUser Permission = "user:delete"
+    PermissionReadOrder  Permission = "order:read"
+    PermissionWriteOrder Permission = "order:write"
+)
+
+type Role struct {
+    Name        string
+    Permissions []Permission
+}
+
+// Default roles
+var (
+    RoleUser = Role{
+        Name:        "user",
+        Permissions: []Permission{
+            PermissionReadUser,
+        },
+    }
+    
+    RoleAdmin = Role{
+        Name: "admin",
+        Permissions: []Permission{
+            PermissionReadUser,
+            PermissionWriteUser,
+            PermissionDeleteUser,
+            PermissionReadOrder,
+            PermissionWriteOrder,
+        },
+    }
+)
+```
+
+## Permission Guard
+
+```go title="guards/permission_guard.go"
+type PermissionGuard struct {
+    requiredPermission Permission
+    rolePermissions    map[Role][]Permission
+}
+
+func NewPermissionGuard(required Permission, rolePerms map[Role][]Permission) *PermissionGuard {
+    return &PermissionGuard{
+        requiredPermission: required,
+        rolePermissions:    rolePerms,
+    }
+}
+
+func (g *PermissionGuard) CanActivate(ctx *common.Context) (bool, error) {
+    user := ctx.Get("user").(*User)
+    if user == nil {
+        return false, common.NewUnauthorizedError("User not authenticated")
+    }
+    
+    userPermissions, ok := g.rolePermissions[user.Role]
+    if !ok {
+        return false, common.NewForbiddenError("Role not found")
+    }
+    
+    for _, perm := range userPermissions {
+        if perm == g.requiredPermission {
+            return true, nil
+        }
+    }
+    
+    return false, common.NewForbiddenError("Insufficient permissions")
+}
+```
+
+## Resource-based Authorization
+
+```go title="rbac/resource_guard.go"
+type Resource string
+
+const (
+    ResourceUsers   Resource = "users"
+    ResourceOrders  Resource = "orders"
+    ResourceProducts Resource = "products"
+)
+
+type ResourceAction struct {
+    Resource Resource
+    Action   string // "create", "read", "update", "delete"
+}
+
+type ResourceGuard struct {
+    policy map[ResourceAction][]Role
+}
+
+func NewResourceGuard(policy map[ResourceAction][]Role) *ResourceGuard {
+    return &ResourceGuard{policy: policy}
+}
+
+func (g *ResourceGuard) CanActivate(ctx *common.Context, resource Resource, action string) (bool, error) {
+    user := ctx.Get("user").(*User)
+    if user == nil {
+        return false, common.NewUnauthorizedError("User not authenticated")
+    }
+    
+    allowedRoles, ok := g.policy[ResourceAction{Resource: resource, Action: action}]
+    if !ok {
+        // No policy defined, deny by default
+        return false, common.NewForbiddenError("Access denied")
+    }
+    
+    for _, role := range allowedRoles {
+        if user.Role == role {
+            return true, nil
+        }
+    }
+    
+    return false, common.NewForbiddenError("Insufficient permissions")
+}
+```
+
+## Ownership Guard
+
+```go title="guards/ownership_guard.go"
+type OwnershipGuard struct {
+    getResourceOwner func(ctx *common.Context, resourceID string) (string, error)
+}
+
+func NewOwnershipGuard(fn func(ctx *common.Context, resourceID string) (string, error)) *OwnershipGuard {
+    return &OwnershipGuard{getResourceOwner: fn}
+}
+
+func (g *OwnershipGuard) CanActivate(ctx *common.Context, resourceID string) (bool, error) {
+    user := ctx.Get("user").(*User)
+    if user == nil {
+        return false, common.NewUnauthorizedError("User not authenticated")
+    }
+    
+    // Admin can access any resource
+    if user.Role == RoleAdmin {
+        return true, nil
+    }
+    
+    ownerID, err := g.getResourceOwner(ctx, resourceID)
+    if err != nil {
+        return false, common.NewNotFoundError("Resource not found")
+    }
+    
+    if ownerID != user.ID {
+        return false, common.NewForbiddenError("You can only access your own resources")
+    }
+    
+    return true, nil
+}
+```
+
+## Usage Examples
+
+### Protect Resource with Permission
+
+```go
+{
+    Method: "DELETE",
+    Path: "/users/{id}",
+    Handler: usersController.Delete,
+    Guards: []common.Guard{
+        guards.NewJWTAuthGuard(jwtService),
+        guards.NewPermissionGuard(
+            PermissionDeleteUser,
+            map[rbac.Role][]rbac.Permission{
+                rbac.RoleAdmin: {rbac.PermissionDeleteUser},
+            },
+        ),
+    },
+}
+```
+
+### Protect Resource with Ownership
+
+```go
+func (c *OrdersController) Delete(ctx *common.Context) error {
+    orderID := ctx.Param("id")
+    
+    // Check ownership
+    canAccess, err := ownershipGuard.CanActivate(ctx, orderID)
+    if err != nil || !canAccess {
+        return err
+    }
+    
+    return c.ordersService.Delete(ctx, orderID)
+}
+```
+
+### Multiple Guards for Fine-grained Control
+
+```go
+{
+    Method: "PUT",
+    Path: "/orders/{id}/status",
+    Handler: ordersController.UpdateStatus,
+    Guards: []common.Guard{
+        guards.NewJWTAuthGuard(jwtService),
+        guards.NewRolesGuard(RoleAdmin, RoleManager),
+        guards.NewPermissionGuard(PermissionWriteOrder, adminPermissions),
+    },
+}
+```

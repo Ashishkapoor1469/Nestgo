@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Fonts setup */
+  --font-sans: var(--font-inter), var(--font-geist-sans), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), var(--font-geist-mono), monospace;
+
+  /* Custom Color Palette */
+  --color-primary: var(--primary);
+  --color-primary-foreground: #ffffff;
+  
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Radius mapping for Shadcn */
+  --radius-xl: var(--radius);
+  --radius-lg: calc(var(--radius) - 2px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 6px);
+}
+
+:root {
+  /* Midnight Blue & Mist Grey Theme */
+  --background: #ECEFF1;
+  --foreground: #191970;
+  
+  --card: #FFFFFF;
+  --card-foreground: #191970;
+  
+  --popover: #FFFFFF;
+  --popover-foreground: #191970;
+  
+  --primary: #191970;
+  --primary-foreground: #ECEFF1;
+  
+  --secondary: #E8EEF4;
+  --secondary-foreground: #191970;
+  
+  --muted: #D1D9E6;
+  --muted-foreground: #3D4F7C;
+  
+  --accent: #D1D9E6;
+  --accent-foreground: #191970;
+  
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  
+  --border: #C5CED9;
+  --input: #D1D9E6;
+  --ring: #191970;
+  
+  --radius: 0.5rem;
+}
+
+/* Base styles */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/30;
+  }
+}
+
+/* Clean modern styling */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(197, 206, 217, 0.5);
+}
+
+/* Syntax Highlighting for Code Blocks */
+pre {
+  background-color: #1a202c !important;
+  color: #e2e8f0 !important;
+}
+
+/* Keywords - Purple/Indigo */
+pre :where([data-line] span[style*="color: rgb(199, 146"]) {
+  color: #9333ea !important;
+  font-weight: 600;
+}
+
+pre code span[style*="color: rgb(199, 146"] {
+  color: #9333ea !important;
+}
+
+/* Strings - Green */
+pre :where([data-line] span[style*="color: rgb(86, 217"]) {
+  color: #10b981 !important;
+}
+
+pre code span[style*="color: rgb(86, 217"] {
+  color: #10b981 !important;
+}
+
+/* Numbers - Blue */
+pre :where([data-line] span[style*="color: rgb(181, 206"]) {
+  color: #3b82f6 !important;
+}
+
+pre code span[style*="color: rgb(181, 206"] {
+  color: #3b82f6 !important;
+}
+
+/* Functions/Methods - Cyan */
+pre :where([data-line] span[style*="color: rgb(167, 243"]) {
+  color: #06b6d4 !important;
+}
+
+pre code span[style*="color: rgb(167, 243"] {
+  color: #06b6d4 !important;
+}
+
+/* Comments - Gray */
+pre :where([data-line] span[style*="color: rgb(148, 163"]) {
+  color: #9ca3af !important;
+  font-style: italic;
+}
+
+pre code span[style*="color: rgb(148, 163"] {
+  color: #9ca3af !important;
+  font-style: italic;
+}
+
+/* Operators and punctuation - Neutral light */
+pre :where([data-line] span[style*="color: rgb(230, 235"]) {
+  color: #e5e7eb !important;
+}
+
+pre code span[style*="color: rgb(230, 235"] {
+  color: #e5e7eb !important;
+}
+
+/* Dark theme code block */
+pre {
+  @apply rounded-lg border-0 overflow-hidden;
+}
+
+pre code {
+  @apply text-sm font-mono;
+}
+
+/* Inline code styling */
+code:not(pre code) {
+  @apply px-2 py-1 rounded font-mono text-sm font-semibold;
+  background-color: #1e293b !important;
+  color: #38bdf8 !important;
+}

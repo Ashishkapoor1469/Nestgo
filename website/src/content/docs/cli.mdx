@@ -1,0 +1,181 @@
+---
+title: "CLI Tool"
+description: "NestGo command-line interface and commands reference."
+---
+
+# CLI Tool
+
+The NestGo CLI provides powerful commands for project scaffolding, code generation, and development workflow.
+
+## Installation
+
+```bash
+go install github.com/nestgo/nestgo/cmd/nestgo@latest
+```
+
+Verify installation:
+```bash
+nestgo --version
+```
+
+## Shell Autocompletion
+
+Enable autocompletion for faster command entry:
+
+**Bash:**
+```bash
+echo 'source <(nestgo completion bash)' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**Zsh:**
+```bash
+echo 'source <(nestgo completion zsh)' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**Fish:**
+```bash
+nestgo completion fish | source
+```
+
+## Commands Overview
+
+| Command | Description |
+|---------|-------------|
+| `nestgo new` | Create a new NestGo project |
+| `nestgo dev` | Start development server with hot-reload |
+| `nestgo generate` | Generate code (module, controller, service) |
+| `nestgo doctor` | Run diagnostics on your project |
+| `nestgo graph` | Visualize module dependencies |
+| `nestgo build` | Build for production |
+
+## new
+
+Create a new NestGo project:
+
+```bash
+nestgo new my-api
+```
+
+**Options:**
+- `--package-manager` - Choose package manager (go-modules, dep)
+- `--skip-git` - Skip git initialization
+- `--template` - Use a specific template (default, microservice, api)
+
+**Examples:**
+```bash
+# Create with default settings
+nestgo new my-api
+
+# Create without git init
+nestgo new my-api --skip-git
+
+# Use microservice template
+nestgo new my-api --template=microservice
+```
+
+## dev
+
+Start the development server with hot-reload:
+
+```bash
+nestgo dev
+```
+
+The server will start at `http://localhost:8080`.
+
+## generate
+
+Generate code components:
+
+### Module
+
+```bash
+nestgo generate module products
+```
+
+Creates:
+```
+internal/products/
+└── products.module.go
+```
+
+### Controller
+
+```bash
+nestgo generate controller products
+```
+
+### Service
+
+```bash
+nestgo generate service products
+```
+
+### Resource (all-in-one)
+
+```bash
+nestgo generate resource products
+```
+
+Creates controller, service, DTO, and module.
+
+## doctor
+
+Run diagnostics to check your project setup:
+
+```bash
+nestgo doctor
+```
+
+Checks:
+- Go version compatibility
+- Module dependencies
+- Configuration validity
+- Port availability
+
+## graph
+
+Visualize module dependencies as a graph:
+
+```bash
+nestgo graph
+```
+
+Outputs a text-based diagram showing how modules depend on each other.
+
+## build
+
+Build for production:
+
+```bash
+nestgo build
+```
+
+Outputs binary to `./dist/`.
+
+## Quick Reference
+
+```bash
+# Create project
+nestgo new my-app
+cd my-app
+
+# Start development
+nestgo dev
+
+# Generate components
+nestgo generate module users
+nestgo generate controller users
+nestgo generate service users
+
+# Check setup
+nestgo doctor
+
+# View dependencies
+nestgo graph
+
+# Production build
+nestgo build
+```

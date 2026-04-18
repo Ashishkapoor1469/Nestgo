@@ -1,0 +1,170 @@
+---
+title: "Interceptors"
+description: "AOP-style cross-cutting concerns in NestGo."
+---
+
+# Interceptors
+
+Interceptors are AOP-style components that can transform request/response data, bind extra logic before/after method execution, cache responses, and log method execution time.
+
+## Interceptor Interface
+
+```go
+type Interceptor interface {
+    Intercept(ctx *Context, next HandlerFunc) error
+}
+```
+
+## Creating an Interceptor
+
+```go title="interceptors/logging_interceptor.go"
+package interceptors
+
+import (
+    "github.com/nestgo/nestgo/common"
+    "time"
+)
+
+type LoggingInterceptor struct {
+    logger *slog.Logger
+}
+
+func NewLoggingInterceptor(logger *slog.Logger) *LoggingInterceptor {
+    return &LoggingInterceptor{logger: logger}
+}
+
+func (i *LoggingInterceptor) Intercept(ctx *common.Context, next common.HandlerFunc) error {
+    start := time.Now()
+    
+    i.logger.Info("Request started",
+        "method", ctx.Request.Method,
+        "path", ctx.Request.URL.Path,
+    )
+    
+    // Execute handler
+    err := next(ctx)
+    
+    duration := time.Since(start)
+    i.logger.Info("Request completed",
+        "duration", duration,
+        "status", ctx.Response.Status,
+    )
+    
+    return err
+}
+```
+
+## Response Transformation Interceptor
+
+```go title="interceptors/transform_interceptor.go"
+type TransformInterceptor struct{}
+
+func (i *TransformInterceptor) Intercept(ctx *common.Context, next common.HandlerFunc) error {
+    // Execute handler
+    err := next(ctx)
+    if err != nil {
+        return err
+    }
+    
+    // Transform response
+    data := ctx.Get("response")
+    wrapped := map[string]interface{}{
+        "success": true,
+        "data":    data,
+        "timestamp": time.Now(),
+    }
+    
+    ctx.Set("response", wrapped)
+    return nil
+}
+```
+
+## Cache Interceptor
+
+```go title="interceptors/cache_interceptor.go"
+type CacheInterceptor struct {
+    cache *redis.Client
+    ttl   time.Duration
+}
+
+func (i *CacheInterceptor) Intercept(ctx *common.Context, next common.HandlerFunc) error {
+    // Only cache GET requests
+    if ctx.Request.Method != "GET" {
+        return next(ctx)
+    }
+    
+    cacheKey := generateCacheKey(ctx)
+    
+    // Check cache
+    cached, err := i.cache.Get(ctx.Request.Context(), cacheKey).Result()
+    if err == nil {
+        ctx.Set("response", cached)
+        ctx.SetHeader("X-Cache", "HIT")
+        return nil
+    }
+    
+    // Execute handler
+    err = next(ctx)
+    if err != nil {
+        return err
+    }
+    
+    // Cache response
+    response := ctx.Get("response")
+    i.cache.Set(ctx.Request.Context(), cacheKey, response, i.ttl)
+    ctx.SetHeader("X-Cache", "MISS")
+    
+    return nil
+}
+```
+
+## Timeout Interceptor
+
+```go title="interceptors/timeout_interceptor.go"
+type TimeoutInterceptor struct {
+    timeout time.Duration
+}
+
+func (i *TimeoutInterceptor) Intercept(ctx *common.Context, next common.HandlerFunc) error {
+    done := make(chan error, 1)
+    
+    go func() {
+        done <- next(ctx)
+    }()
+    
+    select {
+    case err := <-done:
+        return err
+    case <-time.After(i.timeout):
+        return common.NewGatewayTimeoutError("Request timeout")
+    }
+}
+```
+
+## Applying Interceptors
+
+**Global Interceptor:**
+```go
+app.UseInterceptor(interceptors.NewLoggingInterceptor(logger))
+```
+
+**Controller-level:**
+```go
+func (c *UsersController) Interceptors() []common.Interceptor {
+    return []common.Interceptor{
+        interceptors.NewTransformInterceptor(),
+    }
+}
+```
+
+**Route-level:**
+```go
+{
+    Method: "GET",
+    Path: "/users",
+    Handler: c.FindAll,
+    Interceptors: []common.Interceptor{
+        interceptors.NewCacheInterceptor(cache, time.Minute),
+    },
+}
+```

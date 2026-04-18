@@ -1,0 +1,252 @@
+---
+title: "Authentication"
+description: "JWT and OAuth2 authentication strategies in NestGo."
+---
+
+# Authentication
+
+NestGo provides comprehensive authentication patterns including JWT tokens and OAuth2 integration.
+
+## JWT Authentication
+
+### JWT Service
+
+```go title="auth/jwt_service.go"
+package auth
+
+import (
+    "github.com/golang-jwt/jwt/v5"
+    "time"
+)
+
+type JWTService struct {
+    secretKey []byte
+}
+
+func NewJWTService(secret string) *JWTService {
+    return &JWTService{secretKey: []byte(secret)}
+}
+
+type Claims struct {
+    UserID string `json:"userId"`
+    Email  string `json:"email"`
+    Role   string `json:"role"`
+    jwt.RegisteredClaims
+}
+
+func (s *JWTService) GenerateToken(user *User) (string, error) {
+    claims := &Claims{
+        UserID: user.ID,
+        Email:  user.Email,
+        Role:   user.Role,
+        RegisteredClaims: jwt.RegisteredClaims{
+            ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+            IssuedAt:  jwt.NewNumericDate(time.Now()),
+            Issuer:    "nestgo-app",
+        },
+    }
+    
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    return token.SignedString(s.secretKey)
+}
+
+func (s *JWTService) ValidateToken(tokenString string) (*Claims, error) {
+    token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+        return s.secretKey, nil
+    })
+    
+    if err != nil {
+        return nil, err
+    }
+    
+    if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+        return claims, nil
+    }
+    
+    return nil, errors.New("invalid token")
+}
+```
+
+### Auth Controller
+
+```go title="auth/auth_controller.go"
+type AuthController struct {
+    authService *AuthService
+    jwtService  *JWTService
+}
+
+func (c *AuthController) Login(ctx *common.Context) error {
+    var dto LoginDTO
+    if err := ctx.Bind(&dto); err != nil {
+        return common.NewBadRequestError("Invalid request")
+    }
+    
+    user, err := c.authService.ValidateCredentials(dto.Email, dto.Password)
+    if err != nil {
+        return common.NewUnauthorizedError("Invalid credentials")
+    }
+    
+    token, err := c.jwtService.GenerateToken(user)
+    if err != nil {
+        return err
+    }
+    
+    return ctx.JSON(http.StatusOK, map[string]interface{}{
+        "token": token,
+        "user":  user,
+    })
+}
+
+func (c *AuthController) Register(ctx *common.Context) error {
+    var dto RegisterDTO
+    if err := ctx.Bind(&dto); err != nil {
+        return common.NewBadRequestError("Invalid request")
+    }
+    
+    user, err := c.authService.Register(&dto)
+    if err != nil {
+        return err
+    }
+    
+    token, err := c.jwtService.GenerateToken(user)
+    if err != nil {
+        return err
+    }
+    
+    return ctx.JSON(http.StatusCreated, map[string]interface{}{
+        "token": token,
+        "user":  user,
+    })
+}
+
+func (c *AuthController) Me(ctx *common.Context) error {
+    user := ctx.Get("user").(*User)
+    return ctx.JSON(http.StatusOK, user)
+}
+```
+
+## Password Hashing
+
+```go title="auth/password.go"
+package auth
+
+import "golang.org/x/crypto/bcrypt"
+
+func HashPassword(password string) (string, error) {
+    bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+    return string(bytes), err
+}
+
+func CheckPassword(password, hash string) bool {
+    err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+    return err == nil
+}
+```
+
+## OAuth2 Integration
+
+```go title="auth/oauth2_service.go"
+package auth
+
+import (
+    "golang.org/x/oauth2"
+    "golang.org/x/oauth2/google"
+)
+
+type OAuth2Service struct {
+    config *oauth2.Config
+}
+
+func NewOAuth2Service(clientID, clientSecret, redirectURL string) *OAuth2Service {
+    return &OAuth2Service{
+        config: &oauth2.Config{
+            ClientID:     clientID,
+            ClientSecret: clientSecret,
+            RedirectURL:  redirectURL,
+            Scopes:       []string{"email", "profile"},
+            Endpoint:     google.Endpoint,
+        },
+    }
+}
+
+func (s *OAuth2Service) GetAuthURL(state string) string {
+    return s.config.AuthCodeURL(state, oauth2.AccessTypeOffline)
+}
+
+func (s *OAuth2Service) ExchangeCode(code string) (*oauth2.Token, error) {
+    return s.config.Exchange(context.Background(), code)
+}
+```
+
+## JWT Auth Guard
+
+```go title="guards/jwt_guard.go"
+type JWTAuthGuard struct {
+    jwtService *JWTService
+}
+
+func NewJWTAuthGuard(service *JWTService) *JWTAuthGuard {
+    return &JWTAuthGuard{jwtService: service}
+}
+
+func (g *JWTAuthGuard) CanActivate(ctx *common.Context) (bool, error) {
+    authHeader := ctx.Header("Authorization")
+    if authHeader == "" {
+        return false, common.NewUnauthorizedError("Missing authorization header")
+    }
+    
+    // Extract token from "Bearer <token>"
+    parts := strings.Split(authHeader, " ")
+    if len(parts) != 2 || parts[0] != "Bearer" {
+        return false, common.NewUnauthorizedError("Invalid authorization format")
+    }
+    
+    claims, err := g.jwtService.ValidateToken(parts[1])
+    if err != nil {
+        return false, common.NewUnauthorizedError("Invalid token")
+    }
+    
+    // Store user info in context
+    ctx.Set("userId", claims.UserID)
+    ctx.Set("userEmail", claims.Email)
+    ctx.Set("userRole", claims.Role)
+    
+    return true, nil
+}
+```
+
+## Routes Configuration
+
+```go
+{
+    Method: "POST",
+    Path: "/auth/login",
+    Handler: authController.Login,
+},
+{
+    Method: "POST",
+    Path: "/auth/register",
+    Handler: authController.Register,
+},
+{
+    Method: "GET",
+    Path: "/auth/me",
+    Handler: authController.Me,
+    Guards: []common.Guard{guards.NewJWTAuthGuard(jwtService)},
+},
+```
+
+## Protected Route Example
+
+```go
+// Protected route requiring authentication
+{
+    Method: "DELETE",
+    Path: "/users/{id}",
+    Handler: usersController.Delete,
+    Guards: []common.Guard{
+        guards.NewJWTAuthGuard(jwtService),
+        guards.NewRolesGuard(RoleAdmin),
+    },
+}
+```

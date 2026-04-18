@@ -1,0 +1,34 @@
+---
+title: "Modules"
+description: "Understanding the building blocks of NestGo architecture."
+---
+
+# Modules
+
+Modules are the foundational atomic layers of a NestGo project structure. They encapsulate closely related `Controllers`, `Services`, and `Providers` into a cohesive feature domain.
+
+## Writing a Module
+
+```go title="users/module.go"
+import (
+    "github.com/nestgo/nestgo/common"
+    "github.com/nestgo/nestgo/di"
+)
+
+type UsersModule struct{}
+
+func (m *UsersModule) Module() common.ModuleConfig {
+    service := NewUserService()
+    controller := NewUserController(service)
+
+    return common.ModuleConfig{
+        Name:        "users",
+        Controllers: []common.Controller{controller},
+        Providers: []di.Provider{
+            {Instance: service},
+        },
+    }
+}
+```
+
+The Dependency Container scans your `Controllers` and `Providers`, automatically linking requested parameters to injected services securely!

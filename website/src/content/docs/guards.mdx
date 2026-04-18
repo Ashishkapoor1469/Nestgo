@@ -1,0 +1,170 @@
+---
+title: "Guards"
+description: "Implement authentication and authorization in NestGo."
+---
+
+# Guards
+
+Guards determine whether a request should be handled by the route handler. They're used for authentication, authorization (RBAC), feature flags, and request validation.
+
+## Guard Interface
+
+```go
+type Guard interface {
+    CanActivate(ctx *Context) (bool, error)
+}
+```
+
+## Creating a Guard
+
+```go title="guards/auth_guard.go"
+package guards
+
+import "github.com/nestgo/nestgo/common"
+
+type AuthGuard struct {
+    tokenService *TokenService
+}
+
+func NewAuthGuard(tokenService *TokenService) *AuthGuard {
+    return &AuthGuard{tokenService: tokenService}
+}
+
+func (g *AuthGuard) CanActivate(ctx *common.Context) (bool, error) {
+    token := ctx.Header("Authorization")
+    if token == "" {
+        return false, common.NewUnauthorizedError("Missing authentication token")
+    }
+    
+    // Validate token
+    user, err := g.tokenService.Validate(token)
+    if err != nil {
+        return false, common.NewUnauthorizedError("Invalid token")
+    }
+    
+    // Store user in context
+    ctx.Set("user", user)
+    return true, nil
+}
+```
+
+## Applying Guards
+
+**Global Guard:**
+```go
+app.UseGuard(guards.NewAuthGuard(tokenService))
+```
+
+**Controller-level:**
+```go
+func (c *UsersController) Guards() []common.Guard {
+    return []common.Guard{
+        guards.NewAuthGuard(),
+    }
+}
+```
+
+**Route-level:**
+```go
+{
+    Method: "DELETE",
+    Path: "/users/{id}",
+    Handler: c.Delete,
+    Guards: []common.Guard{
+        guards.NewAuthGuard(),
+        guards.NewAdminGuard(),
+    },
+}
+```
+
+## RBAC Guard
+
+```go title="guards/roles_guard.go"
+type Role string
+
+const (
+    RoleUser  Role = "user"
+    RoleAdmin Role = "admin"
+    RoleSuper Role = "superadmin"
+)
+
+type RolesGuard struct {
+    allowedRoles []Role
+}
+
+func NewRolesGuard(roles ...Role) *RolesGuard {
+    return &RolesGuard{allowedRoles: roles}
+}
+
+func (g *RolesGuard) CanActivate(ctx *common.Context) (bool, error) {
+    user := ctx.Get("user").(*User)
+    if user == nil {
+        return false, common.NewUnauthorizedError("User not authenticated")
+    }
+    
+    for _, allowed := range g.allowedRoles {
+        if user.Role == allowed {
+            return true, nil
+        }
+    }
+    
+    return false, common.NewForbiddenError("Insufficient permissions")
+}
+```
+
+**Usage:**
+```go
+{
+    Method: "POST",
+    Path: "/admin/users",
+    Handler: c.CreateUser,
+    Guards: []common.Guard{
+        guards.NewRolesGuard(RoleAdmin, RoleSuper),
+    },
+}
+```
+
+## Feature Flag Guard
+
+```go title="guards/feature_flag_guard.go"
+type FeatureFlagGuard struct {
+    flagService *FeatureFlagService
+    featureName string
+}
+
+func NewFeatureFlagGuard(service *FeatureFlagService, feature string) *FeatureFlagGuard {
+    return &FeatureFlagGuard{
+        flagService: service,
+        featureName: feature,
+    }
+}
+
+func (g *FeatureFlagGuard) CanActivate(ctx *common.Context) (bool, error) {
+    enabled := g.flagService.IsEnabled(g.featureName)
+    if !enabled {
+        return false, common.NewNotFoundError("Feature not available")
+    }
+    return true, nil
+}
+```
+
+## Rate Limiting Guard
+
+```go title="guards/rate_limit_guard.go"
+type RateLimitGuard struct {
+    limiter *RateLimiter
+    max     int
+    window  time.Duration
+}
+
+func (g *RateLimitGuard) CanActivate(ctx *common.Context) (bool, error) {
+    ip := ctx.Request.RemoteAddr
+    
+    allowed := g.limiter.Allow(ip, g.max, g.window)
+    if !allowed {
+        return false, common.NewTooManyRequestsError("Rate limit exceeded")
+    }
+    
+    return true, nil
+}
+```

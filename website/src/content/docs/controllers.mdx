@@ -1,0 +1,228 @@
+---
+title: "Controllers"
+description: "HTTP endpoint handlers in NestGo."
+---
+
+# Controllers
+
+Controllers handle HTTP requests and responses. They define routes and delegate business logic to services.
+
+## Controller Interface
+
+```go
+type Controller interface {
+    Prefix() string
+    Routes() []Route
+}
+```
+
+## Basic Controller
+
+```go title="users/users.controller.go"
+package users
+
+import (
+    "github.com/nestgo/nestgo/common"
+    "net/http"
+)
+
+type UsersController struct {
+    service *UsersService
+}
+
+func NewUsersController(service *UsersService) *UsersController {
+    return &UsersController{service: service}
+}
+
+func (c *UsersController) Prefix() string {
+    return "/users"
+}
+
+func (c *UsersController) Routes() []common.Route {
+    return []common.Route{
+        {Method: http.MethodGet, Path: "/", Handler: c.FindAll},
+        {Method: http.MethodGet, Path: "/{id}", Handler: c.FindOne},
+        {Method: http.MethodPost, Path: "/", Handler: c.Create},
+        {Method: http.MethodPut, Path: "/{id}", Handler: c.Update},
+        {Method: http.MethodDelete, Path: "/{id}", Handler: c.Delete},
+    }
+}
+```
+
+## Handler Methods
+
+```go
+func (c *UsersController) FindAll(ctx *common.Context) error {
+    users, err := c.service.FindAll(ctx)
+    if err != nil {
+        return err
+    }
+    return ctx.JSON(http.StatusOK, users)
+}
+
+func (c *UsersController) FindOne(ctx *common.Context) error {
+    id := ctx.Param("id")
+    
+    user, err := c.service.FindOne(ctx, id)
+    if err != nil {
+        return err
+    }
+    
+    return ctx.JSON(http.StatusOK, user)
+}
+
+func (c *UsersController) Create(ctx *common.Context) error {
+    var dto CreateUserDTO
+    if err := ctx.Bind(&dto); err != nil {
+        return common.NewBadRequestError("Invalid request body")
+    }
+    
+    user, err := c.service.Create(ctx, &User{
+        Name:  dto.Name,
+        Email: dto.Email,
+    })
+    if err != nil {
+        return err
+    }
+    
+    return ctx.JSON(http.StatusCreated, user)
+}
+
+func (c *UsersController) Update(ctx *common.Context) error {
+    id := ctx.Param("id")
+    
+    var dto UpdateUserDTO
+    if err := ctx.Bind(&dto); err != nil {
+        return common.NewBadRequestError("Invalid request body")
+    }
+    
+    user, err := c.service.Update(ctx, id, &User{
+        Name:  dto.Name,
+        Email: dto.Email,
+    })
+    if err != nil {
+        return err
+    }
+    
+    return ctx.JSON(http.StatusOK, user)
+}
+
+func (c *UsersController) Delete(ctx *common.Context) error {
+    id := ctx.Param("id")
+    
+    if err := c.service.Delete(ctx, id); err != nil {
+        return err
+    }
+    
+    return ctx.NoContent(http.StatusNoContent)
+}
+```
+
+## DTOs (Data Transfer Objects)
+
+```go title="users/dto.go"
+type CreateUserDTO struct {
+    Name  string `json:"name"`
+    Email string `json:"email"`
+    Role  string `json:"role"`
+}
+
+type UpdateUserDTO struct {
+    Name  string `json:"name"`
+    Email string `json:"email"`
+}
+```
+
+## Request Context API
+
+```go
+// Get path parameter
+id := ctx.Param("id")
+
+// Get query parameter
+page := ctx.Query("page")
+limit := ctx.Query("limit", "10")
+
+// Get header
+auth := ctx.Header("Authorization")
+
+// Bind JSON body
+var dto CreateUserDTO
+ctx.Bind(&dto)
+
+// Set response header
+ctx.SetHeader("X-Request-Id", requestID)
+
+// Get/set context values
+ctx.Set("user", currentUser)
+user := ctx.Get("user").(*User)
+```
+
+## Response Helpers
+
+```go
+// JSON response
+return ctx.JSON(http.StatusOK, data)
+
+// No content
+return ctx.NoContent(http.StatusNoContent)
+
+// JSON with status
+return ctx.JSON(http.StatusCreated, created)
+
+// Error response
+return ctx.Error(http.StatusInternalServerError, err)
+```
+
+## Guards on Controllers
+
+```go
+func (c *UsersController) Guards() []common.Guard {
+    return []common.Guard{
+        guards.NewJWTAuthGuard(jwtService),
+    }
+}
+```
+
+## Interceptors on Controllers
+
+```go
+func (c *UsersController) Interceptors() []common.Interceptor {
+    return []common.Interceptor{
+        interceptors.NewLoggingInterceptor(logger),
+        interceptors.NewTransformInterceptor(),
+    }
+}
+```
+
+## Nested Routes
+
+Controllers can define nested routes by using the parent prefix:
+
+```go title="orders/orders.controller.go"
+type OrdersController struct {
+    service    *OrdersService
+    itemsCtrl  *OrderItemsController
+}
+
+func (c *OrdersController) Prefix() string {
+    return "/orders"
+}
+
+func (c *OrdersController) Routes() []common.Route {
+    return []common.Route{
+        {Method: http.MethodGet, Path: "/", Handler: c.FindAll},
+        {Method: http.MethodGet, Path: "/{id}", Handler: c.FindOne},
+        // Nested routes via sub-controller
+        {Method: http.MethodGet, Path: "/{id}/items", Handler: c.itemsCtrl.FindAll},
+    }
+}
+```
+
+## Best Practices
+
+1. **Thin Controllers** - Delegate all business logic to services
+2. **Consistent Naming** - Use RESTful route conventions
+3. **Proper Error Handling** - Return meaningful errors
+4. **Input Validation** - Validate request data early
+5. **Use DTOs** - Separate API contracts from internal models

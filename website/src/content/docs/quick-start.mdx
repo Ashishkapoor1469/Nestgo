@@ -1,0 +1,56 @@
+---
+title: "Quick Start"
+description: "Get started with NestGo in minutes."
+---
+
+# Quick Start
+
+Build your first NestGo application in under 5 minutes.
+
+## Prerequisites
+
+- **Go**: Version 1.22 or higher
+- **Git**: For version control
+
+## Step 1: Install the CLI
+
+```bash
+go install github.com/nestgo/nestgo/cmd/nestgo@latest
+```
+
+## Step 2: Create Your First Project
+
+```bash
+nestgo new my-api
+cd my-api
+```
+
+## Step 3: Start Development Server
+
+```bash
+nestgo dev
+```
+
+The server starts at `http://localhost:8080`. Changes auto-reload.
+
+## Step 4: Test Your Application
+
+```bash
+curl http://localhost:8080/api/v1/health
+```
+
+**Expected response:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-04-18T10:30:00Z"
+}
+```
+
+## What's Next?
+
+- [Installation](installation) - Detailed installation guide
+- [Modules](modules) - Understand the module system
+- [Controllers](controllers) - Build HTTP endpoints
+- [Services](services) - Create business logic
+- [CLI](cli) - Master the NestGo CLI tool

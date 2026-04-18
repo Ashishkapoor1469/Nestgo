@@ -1,0 +1,217 @@
+---
+title: "Services"
+description: "Business logic layer in NestGo."
+---
+
+# Services
+
+Services are the business logic layer in NestGo. They encapsulate application logic and are automatically injected into controllers and other services.
+
+## Creating a Service
+
+```go title="users/users.service.go"
+package users
+
+import "context"
+
+type User struct {
+    ID    string `json:"id"`
+    Name  string `json:"name"`
+    Email string `json:"email"`
+    Role  string `json:"role"`
+}
+
+type UsersService struct {
+    // Dependencies can be injected here
+}
+
+func NewUsersService() *UsersService {
+    return &UsersService{}
+}
+
+func (s *UsersService) FindAll(ctx context.Context) ([]*User, error) {
+    return []*User{
+        {ID: "1", Name: "Alice", Email: "alice@example.com", Role: "admin"},
+        {ID: "2", Name: "Bob", Email: "bob@example.com", Role: "user"},
+    }, nil
+}
+
+func (s *UsersService) FindOne(ctx context.Context, id string) (*User, error) {
+    return &User{ID: id, Name: "Alice", Email: "alice@example.com", Role: "admin"}, nil
+}
+
+func (s *UsersService) Create(ctx context.Context, user *User) (*User, error) {
+    user.ID = "new-id"
+    return user, nil
+}
+
+func (s *UsersService) Update(ctx context.Context, id string, data *User) (*User, error) {
+    return &User{ID: id, Name: data.Name, Email: data.Email, Role: data.Role}, nil
+}
+
+func (s *UsersService) Delete(ctx context.Context, id string) error {
+    return nil
+}
+```
+
+## Service with Dependencies
+
+```go title="products/products.service.go"
+package products
+
+import (
+    "context"
+    "database/sql"
+)
+
+type ProductsService struct {
+    db *sql.DB
+}
+
+func NewProductsService(db *sql.DB) *ProductsService {
+    return &ProductsService{db: db}
+}
+
+func (s *ProductsService) FindAll(ctx context.Context) ([]*Product, error) {
+    rows, err := s.db.QueryContext(ctx, "SELECT id, name, price FROM products")
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    
+    var products []*Product
+    for rows.Next() {
+        p := &Product{}
+        if err := rows.Scan(&p.ID, &p.Name, &p.Price); err != nil {
+            return nil, err
+        }
+        products = append(products, p)
+    }
+    
+    return products, rows.Err()
+}
+
+func (s *ProductsService) FindOne(ctx context.Context, id string) (*Product, error) {
+    p := &Product{}
+    err := s.db.QueryRowContext(ctx,
+        "SELECT id, name, price FROM products WHERE id = ?", id,
+    ).Scan(&p.ID, &p.Name, &p.Price)
+    
+    if err == sql.ErrNoRows {
+        return nil, errors.New("product not found")
+    }
+    return p, err
+}
+```
+
+## Injecting Services into Controllers
+
+Controllers automatically receive their dependencies:
+
+```go title="users/users.controller.go"
+package users
+
+import (
+    "github.com/nestgo/nestgo/common"
+    "net/http"
+)
+
+type UsersController struct {
+    service *UsersService
+}
+
+func NewUsersController(service *UsersService) *UsersController {
+    return &UsersController{service: service}
+}
+
+func (c *UsersController) Prefix() string {
+    return "/users"
+}
+
+func (c *UsersController) Routes() []common.Route {
+    return []common.Route{
+        {Method: http.MethodGet, Path: "/", Handler: c.FindAll},
+        {Method: http.MethodGet, Path: "/{id}", Handler: c.FindOne},
+        {Method: http.MethodPost, Path: "/", Handler: c.Create},
+        {Method: http.MethodPut, Path: "/{id}", Handler: c.Update},
+        {Method: http.MethodDelete, Path: "/{id}", Handler: c.Delete},
+    }
+}
+
+func (c *UsersController) FindAll(ctx *common.Context) error {
+    users, err := c.service.FindAll(ctx)
+    if err != nil {
+        return err
+    }
+    return ctx.JSON(http.StatusOK, users)
+}
+```
+
+## Service Patterns
+
+### Repository Pattern
+
+```go title="users/users.repository.go"
+type UsersRepository interface {
+    FindAll(ctx context.Context) ([]*User, error)
+    FindOne(ctx context.Context, id string) (*User, error)
+    Create(ctx context.Context, user *User) (*User, error)
+}
+
+type PostgresUsersRepository struct {
+    db *sql.DB
+}
+
+func NewPostgresUsersRepository(db *sql.DB) *PostgresUsersRepository {
+    return &PostgresUsersRepository{db: db}
+}
+
+func (r *PostgresUsersRepository) FindAll(ctx context.Context) ([]*User, error) {
+    // Implementation
+}
+
+type UsersService struct {
+    repo UsersRepository
+}
+
+func NewUsersService(repo UsersRepository) *UsersService {
+    return &UsersService{repo: repo}
+}
+```
+
+### Factory Pattern
+
+```go
+type UsersService struct {
+    // ...
+}
+
+func NewUsersService() *UsersService {
+    return &UsersService{}
+}
+
+// Or with options
+type UsersServiceOption func(*UsersService)
+
+func WithCache(cache *redis.Client) UsersServiceOption {
+    return func(s *UsersService) {
+        s.cache = cache
+    }
+}
+
+func NewUsersService(opts ...UsersServiceOption) *UsersService {
+    s := &UsersService{}
+    for _, opt := range opts {
+        opt(s)
+    }
+    return s
+}
+```
+
+## Best Practices
+
+1. **Single Responsibility** - Keep services focused on one domain
+2. **Dependency Injection** - Let the DI container handle dependencies
+3. **Return Errors** - Always return errors for the caller to handle
+4. **Use Interfaces** - Define repository interfaces for testability
+5. **Context Propagation** - Pass context through the call chain

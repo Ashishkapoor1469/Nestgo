@@ -1,0 +1,35 @@
+---
+title: "Installation"
+description: "How to install and configure NestGo."
+---
+
+# Installation
+
+Welcome to NestGo! Before you start building, you need to ensure you have Go `v1.22+` installed on your machine.
+
+## CLI Core
+
+To unlock the Enterprise routing and scaffolding features of NestGo, install the CLI completely globally:
+
+```bash
+go install github.com/nestgo/nestgo/cmd/nestgo@latest
+```
+
+## Enable Autocomplete
+
+The CLI runs wildly fast. You can speed up your typing by hooking up the autocomplete profiles:
+
+```bash
+# Add to your shell profile (~/.bashrc, ~/.zshrc)
+source <(nestgo completion bash)
+```
+
+## Generate your First App
+
+You're ready to fly! Generate a boilerplate app by typing:
+
+```bash
+nestgo new enterprise-api
+cd enterprise-api
+nestgo dev
+```
