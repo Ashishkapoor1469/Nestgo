@@ -15,7 +15,9 @@ func (m *AppModule) Module() common.ModuleConfig {
 		Imports: []common.Module{
 			&auth.AuthModule{},
 		},
-		Controllers: []common.Controller{},
+		Controllers: []common.Controller{
+			NewAppController(),
+		},
 		Providers:   []di.Provider{},
 	}
 }

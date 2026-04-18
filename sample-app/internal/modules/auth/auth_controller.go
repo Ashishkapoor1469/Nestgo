@@ -21,7 +21,7 @@ func NewAuthController(authService *AuthService) *AuthController {
 
 // Prefix returns the route prefix for all endpoints in this controller.
 func (c *AuthController) Prefix() string {
-	return "/auth"
+	return "/api/auth"
 }
 
 // Routes connects HTTP methods and paths to standard handler functions,

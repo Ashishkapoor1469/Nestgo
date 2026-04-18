@@ -16,7 +16,6 @@ func main() {
 	// Create the application.
 	app := core.New(
 		core.WithAddress(":"+cfg.Port),
-		core.WithGlobalPrefix("/api"),
 	)
 
 	// Register root module.
