@@ -10,7 +10,7 @@ import (
 )
 
 // Version is injected dynamically at build time using -ldflags="-X main.Version=1.0.0"
-var Version = "0.1.1" // Default fallback
+var Version = "0.1.2" // Default fallback
 
 func main() {
 	// Initialize Global Config (~/.nestgo) behind the scenes
