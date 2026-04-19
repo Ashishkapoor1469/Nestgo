@@ -310,48 +310,139 @@ generate:
 `
 
 var readmeTemplate = `# {{.Name}}
-
+ 
 A NestGo application.
-
-## Getting Started
-
+ 
+[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://golang.org)
+[![NestGo](https://img.shields.io/badge/NestGo-Framework-E34F26)](https://github.com/Ashishkapoor1469/Nestgo)
+ 
+---
+ 
+## 🚀 Quick Start
+ 
 ` + "```bash" + `
 # Install dependencies
 go mod tidy
-
+ 
 # Start development server
 nestgo dev
-
-# Or run directly
-go run cmd/server/main.go
 ` + "```" + `
-
-## Project Structure
-
+ 
+**Your API is running at: http://localhost:3000/api**
+ 
+> Note: All routes are prefixed with ` + "`/api`" + ` by default
+ 
+---
+ 
+## 📁 Project Structure
+ 
 ` + "```" + `
 {{.Name}}/
 ├── cmd/server/          # Application entry point
 ├── internal/
 │   ├── config/          # Configuration
 │   ├── modules/         # Feature modules
-│   └── common/          # Shared code
+│   └── common/          # Shared code (guards, middleware, etc.)
 ├── migrations/          # Database migrations
 ├── test/                # Integration tests
 ├── .env                 # Environment variables
 ├── Makefile             # Build scripts
+├── nestgo.yaml          # NestGo configuration
 └── go.mod
 ` + "```" + `
-
-## Commands
-
-| Command | Description |
-|---|---|
-| ` + "`nestgo dev`" + ` | Start dev server with hot reload |
-| ` + "`nestgo generate resource <name>`" + ` | Generate a CRUD resource |
-| ` + "`nestgo generate module <name>`" + ` | Generate a module |
-| ` + "`nestgo doctor`" + ` | Analyze project health |
-| ` + "`make build`" + ` | Build production binary |
-| ` + "`make test`" + ` | Run tests |
-
-## Built with [NestGo](https://github.com/Ashishkapoor1469/Nestgo)
+ 
+---
+ 
+## 🌐 API Endpoints
+ 
+**Base URL:** ` + "`http://localhost:3000/api`" + `
+ 
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | ` + "`/api`" + ` | API welcome |
+| GET | ` + "`/api/health`" + ` | Health check |
+ 
+` + "```bash" + `
+# Test the API
+curl http://localhost:3000/api
+` + "```" + `
+ 
+---
+ 
+## 🛠️ Commands
+ 
+### Development
+` + "```bash" + `
+nestgo dev                          # Start with hot-reload
+nestgo dev --port=8080              # Custom port
+go run cmd/server/main.go           # Run directly
+` + "```" + `
+ 
+### Code Generation
+` + "```bash" + `
+nestgo generate resource <name>     # Generate CRUD resource
+nestgo generate module <name>       # Generate module
+nestgo generate controller <name>   # Generate controller
+nestgo generate service <name>      # Generate service
+` + "```" + `
+ 
+### Database
+` + "```bash" + `
+nestgo migration:create <name>      # Create migration
+nestgo migration:run                # Run migrations
+nestgo migration:rollback           # Rollback
+` + "```" + `
+ 
+### Build & Test
+` + "```bash" + `
+make build                          # Build binary
+make test                           # Run tests
+nestgo doctor                       # Check project health
+nestgo graph                        # Visualize dependencies
+` + "```" + `
+ 
+---
+ 
+## ⚙️ Configuration
+ 
+Create ` + "`.env`" + ` file:
+ 
+` + "```bash" + `
+APP_NAME={{.Name}}
+APP_PORT=3000
+APP_GLOBAL_PREFIX=/api
+ 
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_USER=postgres
+DATABASE_PASSWORD=password
+DATABASE_NAME={{.Name}}
+ 
+JWT_SECRET=your-secret-key
+LOG_LEVEL=info
+` + "```" + `
+ 
+---
+ 
+## 🐳 Docker
+ 
+` + "```bash" + `
+# Build and run
+docker-compose up -d
+ 
+# Or manually
+docker build -t {{.Name}} .
+docker run -p 3000:3000 {{.Name}}
+` + "```" + `
+ 
+---
+ 
+## 📚 Resources
+ 
+- [NestGo Documentation](https://github.com/Ashishkapoor1469/Nestgo)
+- [Go Documentation](https://golang.org/doc/)
+ 
+---
+ 
+**Built with [NestGo](https://github.com/Ashishkapoor1469/Nestgo)** ⭐
 `
