@@ -1,0 +1,16 @@
+# GET http://localhost:3000/api/auth/profile HTTP/1.1
+# Authorization: Bearer mock-super-secret-token
+
+# {
+# "username":"admin",
+# "password":"password123"
+# }
+
+
+
+# POST  http://localhost:3000/api/auth/login HTTP/1.1
+
+# {
+# "username":"admin",
+# "password":"password123"
+# }
