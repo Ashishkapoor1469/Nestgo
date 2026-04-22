@@ -48,6 +48,10 @@ nestgo completion fish | source
 | `nestgo generate` | Generate code (module, controller, service) |
 | `nestgo doctor` | Run diagnostics on your project |
 | `nestgo graph` | Visualize module dependencies |
+| `nestgo lint-arch` | Enforce Clean Architecture module boundaries |
+| `nestgo routes` | Display an AST-generated Route Explorer table |
+| `nestgo docs:generate`| Scaffold OpenAPI specs from code |
+| `nestgo metrics` | Display project health metrics |
 | `nestgo build` | Build for production |
 
 ## new
@@ -144,6 +148,42 @@ nestgo graph
 ```
 
 Outputs a text-based diagram showing how modules depend on each other.
+
+## lint-arch
+
+Enforce Clean Architecture boundaries by detecting illegal cross-module imports:
+
+```bash
+nestgo lint-arch
+```
+
+Returns exit code 1 if a module illegally imports domain logic from an isolated sibling module.
+
+## routes
+
+Visualize all API endpoints currently defined in your controllers via AST inspection:
+
+```bash
+nestgo routes
+```
+
+Scans your codebase and outputs a beautiful terminal table showing Methods, Paths, and Summaries.
+
+## docs:generate
+
+Automatically scaffold `openapi.json` from your existing NestGo AST route definitions:
+
+```bash
+nestgo docs:generate
+```
+
+## metrics
+
+Display key project metrics (number of controllers, services, lines of code, etc.):
+
+```bash
+nestgo metrics
+```
 
 ## build
 

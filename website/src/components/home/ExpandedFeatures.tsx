@@ -40,18 +40,23 @@ const features = [
   },
   {
     icon: GitBranch,
-    title: "Enterprise-Ready",
-    description: "Trusted by thousands of teams. Battle-tested patterns and practices included"
+    title: "Route Discovery",
+    description: "Built-in AST-based route explorer to visualize your API surface instantly."
   },
   {
     icon: Server,
-    title: "Microservices",
-    description: "Create independent services with built-in support for distributed systems"
+    title: "Auth Scaffolding",
+    description: "Generate complete Auth modules with JWT, Bcrypt, and Protected Guards in one command."
   },
   {
     icon: BarChart3,
-    title: "Web Apps",
-    description: "Build REST APIs, GraphQL, WebSockets, and real-time applications with ease"
+    title: "Project Metrics",
+    description: "Analyze project health, complexity, and resource distribution with nestgo metrics."
+  },
+  {
+    icon: Layers,
+    title: "Arch Linter",
+    description: "Enforce clean architecture patterns by rejecting illegal cross-module dependencies."
   },
 ];
 

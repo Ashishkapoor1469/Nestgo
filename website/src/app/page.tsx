@@ -3,6 +3,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/home/Hero";
 import { CorePillars } from "@/components/home/CorePillars";
 import { ExpandedFeatures } from "@/components/home/ExpandedFeatures";
+import { ProductivityTools } from "@/components/home/ProductivityTools";
 import { WhyNestGo } from "@/components/home/WhyNestGo";
 import { DeploySection } from "@/components/home/DeploySection";
 import { Newsletter } from "@/components/home/Newsletter";
@@ -14,6 +15,7 @@ export default function Home() {
       <Hero />
       <CorePillars />
       <ExpandedFeatures />
+      <ProductivityTools />
       <WhyNestGo />
       <DeploySection />
       <Newsletter />

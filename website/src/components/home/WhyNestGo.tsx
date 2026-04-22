@@ -6,10 +6,10 @@ import { Check, X } from "lucide-react";
 const comparisons = [
   { feature: "Modular Architecture", nestgo: true, gin: false, fiber: false },
   { feature: "Advanced DI System", nestgo: true, gin: false, fiber: false },
-  { feature: "Global CLI Tooling", nestgo: true, gin: false, fiber: false },
-  { feature: "Lifecycle Hooks", nestgo: true, gin: false, fiber: false },
-  { feature: "Built-in Guards/Interceptors", nestgo: true, gin: false, fiber: false },
-  { feature: "Scalability", nestgo: "Enterprise", gin: "Medium", fiber: "Medium" },
+  { feature: "Global CLI Tooling", nestgo: "Advanced", gin: "None", fiber: "None" },
+  { feature: "Architecture Enforcement", nestgo: "Built-in", gin: "Manual", fiber: "Manual" },
+  { feature: "Route Explorer (AST)", nestgo: true, gin: false, fiber: false },
+  { feature: "OpenAPI Auto-Gen", nestgo: true, gin: false, fiber: false },
 ];
 
 export function WhyNestGo() {

@@ -2,7 +2,7 @@
 # This file is built to work with the VS Code REST Client extension.
 # Ensure that your NestGo sample-app is running locally using: nestgo dev
 
-@baseUrl = http://localhost:8080/api
+@baseUrl = http://localhost:3000/api
 
 ### 1. Welcome / Ping
 GET {{baseUrl}}
