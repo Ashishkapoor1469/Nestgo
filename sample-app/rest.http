@@ -1,16 +1,70 @@
-# GET http://localhost:3000/api/auth/profile HTTP/1.1
-# Authorization: Bearer mock-super-secret-token
+### NestGo sample-app API Playground
+# This file is built to work with the VS Code REST Client extension.
+# Ensure that your NestGo sample-app is running locally using: nestgo dev
 
-# {
-# "username":"admin",
-# "password":"password123"
-# }
+@baseUrl = http://localhost:8080/api
 
+### 1. Welcome / Ping
+GET {{baseUrl}}
 
+---
 
-# POST  http://localhost:3000/api/auth/login HTTP/1.1
+### 2. Register a new user
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
 
-# {
-# "username":"admin",
-# "password":"password123"
-# }
+{
+    "name": "Jane Developer",
+    "email": "jane.developer@example.com",
+    "password": "secure123"
+}
+
+---
+
+### 3. Login and Generate JWT
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "jane.developer@example.com",
+    "password": "secure123"
+}
+
+### Ensure that you capture the token from the previous request automatically here if using VS Code.
+@token = {{login.response.body.data.token}}
+
+---
+
+### 4. Fetch the authenticated user's profile
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer {{token}}
+
+---
+
+### 5. Fetch all users from PostgreSQL
+GET {{baseUrl}}/users
+
+---
+
+### 6. Fetch the user manually using their ID
+# Copy the ID created from the login to the request below manually if not using script magic
+@userId = {{login.response.body.data.user.id}}
+
+GET {{baseUrl}}/users/{{userId}}
+
+---
+
+### 7. Update User details
+PUT {{baseUrl}}/users/{{userId}}
+Content-Type: application/json
+
+{
+    "name": "Jane Senior Developer"
+}
+
+---
+
+### 8. Delete user
+DELETE {{baseUrl}}/users/{{userId}}

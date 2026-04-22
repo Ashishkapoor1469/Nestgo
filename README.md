@@ -38,8 +38,10 @@ While micro-frameworks like `chi`, `fiber`, and `gin` are fantastic for routing,
 | **💉 Explicit DI Container** | Constructor-based dependency injection supporting Singleton and Request lifecycles. |
 | **🛡 Advanced Pipelines** | Enterprise middleware, RBAC Guards, Response Interceptors, and centralized Exception Filters. |
 | **🚀 High Performance** | Lightning fast native routing built on [Chi](https://github.com/go-chi/chi). |
-| **🛠 Developer CLI** | `nestgo` binary for 1-click project scaffolding, vertical slicing (`generate resource`), and hot-reloading (`nestgo dev`). |
-| **⚙️ Observability Core** | Built-in plugins for Prometheus metrics, zero-allocation structured JSON logging (`slog`), and advanced health endpoints. |
+| **🛠 Developer CLI** | Interactive `nestgo generate` wizard, `nestgo routes` explorer, and `nestgo docs:generate` (OpenAPI). |
+| **🌐 API Versioning** | Built-in `VersionedRouter` for cleanly isolated `/api/v1` and `/api/v2` scoping with standard sunset headers. |
+| **✅ Schema Validation** | Powerful struct tag-based declarative request body validation (`validate:"required,email"`). |
+| **⚙️ Observability Core** | Built-in plugins for Prometheus metrics/status-code tracking (`nestgo metrics`), struct JSON logging, and advanced health endpoints. |
 
 ---
 
@@ -98,11 +100,22 @@ cd my-app
 nestgo dev  # Starts the hot-reloading development server
 ```
 
-### 3. Generate a Resource
-Need a fully wired CRUD slice? Generate the Controller, Service, DTOs, and tests instantly:
+### 3. Generate Components Interactively
+Need a fully wired CRUD slice or an authentication module? Run the interactive wizard or pass arguments directly:
 
 ```bash
+nestgo generate             # Opens interactive component wizard
 nestgo generate resource products
+nestgo generate auth        # Scaffolds production-ready JWT authentication
+```
+
+### 4. Explore your APIs
+You can visualize all of your project's registered routes securely via static AST analysis without even booting your server!
+
+```bash
+nestgo routes
+# Or generate standard OpenAPI v3 docs
+nestgo docs:generate
 ```
 
 ---
@@ -199,13 +212,18 @@ func main() {
 ## 🛠️ Diagnostics & Tooling
 
 To ensure your repository stays impeccably clean as it scales out to hundreds of developers, run zero-configuration diagnostics:
-
 ```bash
 # Verify your application health, test coverage, and catch anti-patterns
 nestgo doctor
 
 # Visualize your entire dependency graph layout
 nestgo graph
+
+# Enforce clean architecture patterns by rejecting cross-module imports
+nestgo lint-arch
+
+# Extract API structure and automatically scaffold `openapi.json`
+nestgo docs:generate
 ```
 
 ## 📜 License

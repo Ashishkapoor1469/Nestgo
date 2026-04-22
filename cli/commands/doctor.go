@@ -33,44 +33,10 @@ func GraphCmd() *cobra.Command {
 	}
 }
 
-// MigrateCmd creates the `nestgo migrate` command.
+// Deprecated: MigrateCmd is replaced by MigrationCmd in migration.go.
+// This function is kept for backward compatibility only.
 func MigrateCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "migrate",
-		Short: "Run database migrations",
-	}
-
-	cmd.AddCommand(
-		&cobra.Command{
-			Use:   "up",
-			Short: "Run all pending migrations",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				utils.EnsureProjectContext("migrate up")
-				fmt.Println("⬆️  Running migrations...")
-				fmt.Println("   (Implement by calling your migration runner)")
-				return nil
-			},
-		},
-		&cobra.Command{
-			Use:   "down",
-			Short: "Rollback the last migration",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				utils.EnsureProjectContext("migrate down")
-				fmt.Println("⬇️  Rolling back last migration...")
-				return nil
-			},
-		},
-		&cobra.Command{
-			Use:   "create [name]",
-			Short: "Create a new migration file",
-			Args:  cobra.ExactArgs(1),
-			RunE: func(cmd *cobra.Command, args []string) error {
-				return createMigration(args[0])
-			},
-		},
-	)
-
-	return cmd
+	return MigrationCmd()
 }
 
 func runDoctor(cmd *cobra.Command, args []string) error {
@@ -242,50 +208,8 @@ func runGraph(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func createMigration(name string) error {
-	utils.EnsureProjectContext("migrate create " + name)
-	dir := "migrations"
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
 
-	timestamp := strings.ReplaceAll(strings.ReplaceAll(
-		strings.Split(fmt.Sprintf("%v", os.Getenv("timestamp")), ".")[0],
-		"-", ""), ":", "")
-	if timestamp == "" {
-		timestamp = fmt.Sprintf("%d", os.Getpid())
-	}
 
-	fileName := fmt.Sprintf("%s_%s.go", timestamp, name)
-	filePath := filepath.Join(dir, fileName)
-
-	content := fmt.Sprintf(`package migrations
-
-import "database/sql"
-
-// %s migration
-func Up_%s(db *sql.DB) error {
-	_, err := db.Exec(`+"`"+`
-		-- Add your migration SQL here
-	`+"`"+`)
-	return err
-}
-
-func Down_%s(db *sql.DB) error {
-	_, err := db.Exec(`+"`"+`
-		-- Add your rollback SQL here
-	`+"`"+`)
-	return err
-}
-`, name, name, name)
-
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
-		return err
-	}
-
-	fmt.Printf("✅ Created migration: %s\n", filePath)
-	return nil
-}
 
 func checkAntiPatterns() []string {
 	var issues []string

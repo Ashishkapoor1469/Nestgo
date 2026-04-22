@@ -1,0 +1,55 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NestGo API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "responses": { "200": { "description": "Successful response" } }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login and get JWT token",
+        "responses": { "200": { "description": "Successful response" } }
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "summary": "Get current user profile",
+        "responses": { "200": { "description": "Successful response" } }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "List all users",
+        "responses": { "200": { "description": "Successful response" } }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Get a user by ID",
+        "responses": { "200": { "description": "Successful response" } }
+      }
+    },
+    "/users": {
+      "post": {
+        "summary": "Create a new user",
+        "responses": { "200": { "description": "Successful response" } }
+      }
+    },
+    "/users/{id}": {
+      "put": {
+        "summary": "Update a user",
+        "responses": { "200": { "description": "Successful response" } }
+      },
+      "delete": {
+        "summary": "Delete a user",
+        "responses": { "200": { "description": "Successful response" } }
+      }
+    }
+  }
+}

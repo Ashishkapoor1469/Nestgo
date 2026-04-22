@@ -8,23 +8,30 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/Ashishkapoor1469/Nestgo/cli/utils"
 	"github.com/spf13/cobra"
 )
 
 // NewCmd creates the `nestgo new` command.
 func NewCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "new [project-name]",
 		Short: "Create a new NestGo project",
 		Long:  "Scaffolds a complete NestGo project with best-practice structure.",
 		Args:  cobra.ExactArgs(1),
 		RunE:  runNew,
 	}
+	cmd.Flags().StringP("template", "t", "rest", "Project template: rest, microservice, graphql")
+	return cmd
 }
 
 func runNew(cmd *cobra.Command, args []string) error {
 	name := args[0]
-	fmt.Printf("\n🚀 Creating new NestGo project: %s\n\n", name)
+	tmpl, _ := cmd.Flags().GetString("template")
+
+	utils.PrintHeader("Creating NestGo Project: " + name)
+	utils.PrintInfo("Template: " + tmpl)
+	fmt.Println()
 
 	// Create project directory.
 	if err := os.MkdirAll(name, 0755); err != nil {
@@ -38,18 +45,31 @@ func runNew(cmd *cobra.Command, args []string) error {
 		"internal/common/dto",
 		"internal/common/middleware",
 		"internal/common/guards",
+		"internal/common/schemas",
 		"internal/config",
 		"migrations",
 		"test",
 	}
 
+	// Add template-specific directories.
+	switch tmpl {
+	case "microservice":
+		dirs = append(dirs, "internal/health", "internal/metrics")
+	case "graphql":
+		dirs = append(dirs, "internal/graphql/schema", "internal/graphql/resolvers")
+	}
+
+	spinner := utils.StartSpinner("Creating project structure...")
+
 	for _, dir := range dirs {
 		path := filepath.Join(name, dir)
 		if err := os.MkdirAll(path, 0755); err != nil {
+			spinner.StopWithError("Failed to create directory: " + dir)
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
-		fmt.Printf("  📁 Created %s/\n", dir)
 	}
+
+	spinner.StopWithSuccess("Project structure created")
 
 	// Generate files.
 	files := map[string]string{
@@ -74,30 +94,35 @@ func runNew(cmd *cobra.Command, args []string) error {
 		}); err != nil {
 			return fmt.Errorf("failed to create %s: %w", path, err)
 		}
-		fmt.Printf("  📄 Created %s\n", path)
+		utils.PrintStep("📄", path)
 	}
 
 	// Initialize git.
-	fmt.Println("\n📦 Initializing git repository...")
+	fmt.Println()
+	gitSpinner := utils.StartSpinner("Initializing git repository...")
 	gitCmd := exec.Command("git", "init")
 	gitCmd.Dir = name
 	_ = gitCmd.Run()
+	gitSpinner.StopWithSuccess("Git repository initialized")
 
 	// Run go mod tidy.
-	fmt.Println("📦 Installing dependencies...")
+	tidySpinner := utils.StartSpinner("Installing dependencies...")
 	tidyCmd := exec.Command("go", "mod", "tidy")
 	tidyCmd.Dir = name
 	tidyCmd.Stdout = os.Stdout
 	tidyCmd.Stderr = os.Stderr
 	_ = tidyCmd.Run()
+	tidySpinner.StopWithSuccess("Dependencies installed")
 
-	fmt.Printf("\n✅ Project %s created successfully!\n\n", name)
-	fmt.Println("  Get started:")
-	fmt.Printf("    cd %s\n", name)
-	fmt.Println("    nestgo dev")
 	fmt.Println()
-	fmt.Println("  Generate a resource:")
-	fmt.Println("    nestgo generate resource users")
+	utils.PrintSuccess("Project " + name + " created successfully!")
+	fmt.Println()
+	utils.PrintDim("  Get started:")
+	utils.PrintDim("    cd " + name)
+	utils.PrintDim("    nestgo dev")
+	fmt.Println()
+	utils.PrintDim("  Generate a resource:")
+	utils.PrintDim("    nestgo generate resource users")
 	fmt.Println()
 
 	return nil
@@ -134,7 +159,7 @@ func writeTemplate(path, tmplStr string, data any) error {
 var goModTemplate = `module {{.ModuleName}}
 go 1.22
 require (
-	github.com/Ashishkapoor1469/Nestgo v0.1.4
+	github.com/Ashishkapoor1469/Nestgo v0.3.0
 )
 `
 

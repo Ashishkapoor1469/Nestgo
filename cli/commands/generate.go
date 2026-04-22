@@ -18,7 +18,13 @@ func GenerateCmd() *cobra.Command {
 		Use:     "generate [type] [name]",
 		Aliases: []string{"g"},
 		Short:   "Generate NestGo components",
-		Long:    "Generate modules, controllers, services, guards, middleware, interceptors, and full resources.",
+		Long:    "Generate modules, controllers, services, guards, middleware, interceptors, schemas, DTOs, tests, and full resources.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return runInteractiveGenerate()
+			}
+			return cmd.Help()
+		},
 	}
 
 	cmd.AddCommand(
@@ -29,6 +35,10 @@ func GenerateCmd() *cobra.Command {
 		generateGuardCmd(),
 		generateInterceptorCmd(),
 		generateResourceCmd(),
+		generateSchemaCmd(),
+		generateDTOCmd(),
+		generateTestCmd(),
+		AuthCmd(),
 	)
 
 	return cmd
@@ -177,6 +187,58 @@ func generateComponent(componentType, name string) error {
 	return nil
 }
 
+func runInteractiveGenerate() error {
+	utils.PrintHeader("🛠️ Generate Components")
+	fmt.Println("  What would you like to generate?")
+	fmt.Println("    1. resource     (Full CRUD component)")
+	fmt.Println("    2. module       (Module definition)")
+	fmt.Println("    3. controller   (HTTP Controller)")
+	fmt.Println("    4. service      (Business logic)")
+	fmt.Println("    5. auth         (Authentication starter)")
+	fmt.Println("    6. schema       (Validation schema)")
+	fmt.Println("    7. dto          (Data Transfer Object)")
+	fmt.Println("    8. test         (Test scaffolding)")
+	fmt.Println()
+	
+	fmt.Print(utils.StyleAccent.Render("  > Choose an option (1-8): "))
+	
+	var option int
+	_, err := fmt.Scanf("%d", &option)
+	if err != nil {
+		return fmt.Errorf("invalid input")
+	}
+
+	var name string
+	if option != 5 { // Auth doesn't need a name
+		fmt.Print(utils.StyleAccent.Render("  > Enter component name: "))
+		_, err = fmt.Scanf("%s", &name)
+		if err != nil || name == "" {
+			return fmt.Errorf("name is required")
+		}
+	}
+
+	switch option {
+	case 1:
+		return generateResource(name)
+	case 2:
+		return generateComponent("module", name)
+	case 3:
+		return generateComponent("controller", name)
+	case 4:
+		return generateComponent("service", name)
+	case 5:
+		return runGenerateAuth(nil, nil)
+	case 6:
+		return generateSchema(name)
+	case 7:
+		return generateDTO(name)
+	case 8:
+		return generateTest(name)
+	default:
+		return fmt.Errorf("invalid option selected")
+	}
+}
+
 // generateResource generates a complete CRUD resource.
 func generateResource(name string) error {
 	utils.EnsureProjectContext("generate resource")
@@ -221,6 +283,152 @@ func generateResource(name string) error {
 	utils.PrintSuccess(fmt.Sprintf("Resource %s generated successfully!", name))
 	fmt.Printf("   Don't forget to import the module in your app module.\n\n")
 	return nil
+}
+
+// generateSchema generates a schema file for a module.
+func generateSchema(name string) error {
+	utils.EnsureProjectContext("generate schema")
+
+	name = strings.ToLower(name)
+	name = strings.ReplaceAll(name, "-", "_")
+	pascal := toPascalCase(name)
+
+	// Determine module name (strip create_/update_ prefix if present).
+	moduleName := name
+	for _, prefix := range []string{"create_", "update_", "delete_"} {
+		moduleName = strings.TrimPrefix(moduleName, prefix)
+	}
+
+	dir := filepath.Join("internal", "modules", moduleName, "schemas")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	data := map[string]string{
+		"Name":       name,
+		"PascalName": pascal,
+		"Module":     moduleName,
+		"Package":    "schemas",
+	}
+
+	fileName := name + ".schema.go"
+	filePath := filepath.Join(dir, fileName)
+
+	if err := writeGenTemplate(filePath, schemaGenTemplate, data); err != nil {
+		return err
+	}
+
+	utils.PrintSuccess(fmt.Sprintf("Schema generated: %s", filePath))
+	return nil
+}
+
+// generateDTO generates a DTO file for a module.
+func generateDTO(name string) error {
+	utils.EnsureProjectContext("generate dto")
+
+	name = strings.ToLower(name)
+	pascal := toPascalCase(name)
+	singular := strings.TrimSuffix(name, "s")
+	singularPascal := toPascalCase(singular)
+
+	dir := filepath.Join("internal", "modules", name)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	data := map[string]string{
+		"Name":           name,
+		"PascalName":     pascal,
+		"Singular":       singular,
+		"SingularPascal": singularPascal,
+		"Package":        name,
+	}
+
+	filePath := filepath.Join(dir, "dto.go")
+	if err := writeGenTemplate(filePath, dtoGenTemplate, data); err != nil {
+		return err
+	}
+
+	utils.PrintSuccess(fmt.Sprintf("DTO generated: %s", filePath))
+	return nil
+}
+
+// generateTest generates a test file for a module.
+func generateTest(name string) error {
+	utils.EnsureProjectContext("generate test")
+
+	name = strings.ToLower(name)
+	pascal := toPascalCase(name)
+	singular := strings.TrimSuffix(name, "s")
+	singularPascal := toPascalCase(singular)
+
+	dir := filepath.Join("internal", "modules", name)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	data := map[string]string{
+		"Name":           name,
+		"PascalName":     pascal,
+		"Singular":       singular,
+		"SingularPascal": singularPascal,
+		"Package":        name,
+	}
+
+	filePath := filepath.Join(dir, name+"_test.go")
+	if err := writeGenTemplate(filePath, testGenTemplate, data); err != nil {
+		return err
+	}
+
+	utils.PrintSuccess(fmt.Sprintf("Test file generated: %s", filePath))
+	return nil
+}
+
+func generateSchemaCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "schema [name]",
+		Short: "Generate a validation schema",
+		Long: `Generate a validation schema with struct tags for a module.
+
+Example:
+  nestgo generate schema create-user
+  nestgo generate schema update-product`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return generateSchema(args[0])
+		},
+	}
+}
+
+func generateDTOCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "dto [name]",
+		Short: "Generate DTOs (Create + Update)",
+		Long: `Generate Data Transfer Object structs with validation for a module.
+
+Example:
+  nestgo generate dto users
+  nestgo generate dto products`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return generateDTO(args[0])
+		},
+	}
+}
+
+func generateTestCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "test [name]",
+		Short: "Generate a test file",
+		Long: `Generate a table-driven test file for a module.
+
+Example:
+  nestgo generate test users`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return generateTest(args[0])
+		},
+	}
 }
 
 func writeGenTemplate(path, tmplStr string, data any) error {
@@ -775,6 +983,110 @@ func Test{{.PascalName}}Service_Delete(t *testing.T) {
 	_, err = service.FindByID(created.ID)
 	if err == nil {
 		t.Fatal("expected error after deletion")
+	}
+}
+`
+
+// --- Schema Template ---
+
+var schemaGenTemplate = `package {{.Package}}
+
+// {{.PascalName}}Schema defines the validation schema for {{.Name}}.
+// Uses struct tags for automatic validation via common.ValidateStruct().
+type {{.PascalName}}Schema struct {
+	Name        string ` + "`" + `json:"name" validate:"required,min=2,max=100"` + "`" + `
+	Email       string ` + "`" + `json:"email" validate:"required,email"` + "`" + `
+	Description string ` + "`" + `json:"description,omitempty" validate:"max=500"` + "`" + `
+}
+`
+
+// --- DTO Template ---
+
+var dtoGenTemplate = `package {{.Package}}
+
+// Create{{.SingularPascal}}DTO is the request body for creating a {{.Singular}}.
+// Uses validate struct tags for automatic validation.
+type Create{{.SingularPascal}}DTO struct {
+	Name        string ` + "`" + `json:"name" validate:"required,min=2,max=100"` + "`" + `
+	Description string ` + "`" + `json:"description,omitempty" validate:"max=500"` + "`" + `
+}
+
+// Update{{.SingularPascal}}DTO is the request body for updating a {{.Singular}}.
+type Update{{.SingularPascal}}DTO struct {
+	Name        *string ` + "`" + `json:"name,omitempty" validate:"min=2,max=100"` + "`" + `
+	Description *string ` + "`" + `json:"description,omitempty" validate:"max=500"` + "`" + `
+}
+`
+
+// --- Test Template ---
+
+var testGenTemplate = `package {{.Package}}
+
+import (
+	"testing"
+)
+
+func TestNew{{.PascalName}}Service(t *testing.T) {
+	service := New{{.PascalName}}Service()
+	if service == nil {
+		t.Fatal("expected service to be non-nil")
+	}
+}
+
+func Test{{.PascalName}}Service_CRUD(t *testing.T) {
+	service := New{{.PascalName}}Service()
+
+	tests := []struct {
+		name    string
+		action  string
+		wantErr bool
+	}{
+		{"create valid", "create", false},
+		{"find all", "findAll", false},
+		{"find by id", "findById", false},
+		{"delete", "delete", false},
+		{"find deleted", "findDeleted", true},
+	}
+
+	var createdID string
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			switch tt.action {
+			case "create":
+				dto := Create{{.SingularPascal}}DTO{Name: "Test"}
+				item, err := service.Create(dto)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("Create() error = %v, wantErr %v", err, tt.wantErr)
+				}
+				if item != nil {
+					createdID = item.ID
+				}
+			case "findAll":
+				items, total, err := service.FindAll(1, 10)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("FindAll() error = %v, wantErr %v", err, tt.wantErr)
+				}
+				if total == 0 || len(items) == 0 {
+					t.Error("expected items")
+				}
+			case "findById":
+				_, err := service.FindByID(createdID)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("FindByID() error = %v, wantErr %v", err, tt.wantErr)
+				}
+			case "delete":
+				err := service.Delete(createdID)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+				}
+			case "findDeleted":
+				_, err := service.FindByID(createdID)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("FindByID() error = %v, wantErr %v", err, tt.wantErr)
+				}
+			}
+		})
 	}
 }
 `

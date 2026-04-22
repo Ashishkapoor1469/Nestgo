@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -22,24 +21,9 @@ func IsNestGoProject() bool {
 // EnsureProjectContext gracefully fails if run outside a valid NestGo project space.
 func EnsureProjectContext(command string) {
 	if !IsNestGoProject() {
-		fmt.Printf("❌ Cannot execute 'nestgo %s' here.\n", command)
-		fmt.Println("This command must be run inside a valid NestGo project directory (containing go.mod).")
-		fmt.Println("Try running 'nestgo new <app-name>' to create a project first.")
+		PrintError("Cannot execute 'nestgo " + command + "' here.")
+		PrintDim("This command must be run inside a valid NestGo project directory (containing go.mod).")
+		PrintDim("Try running 'nestgo new <app-name>' to create a project first.")
 		os.Exit(1)
 	}
-}
-
-// PrintSuccess logs standardized success messages.
-func PrintSuccess(msg string) {
-	fmt.Printf("\033[32m✅ %s\033[0m\n", msg)
-}
-
-// PrintWarning logs standardized warning messages.
-func PrintWarning(msg string) {
-	fmt.Printf("\033[33m⚠️  %s\033[0m\n", msg)
-}
-
-// PrintError logs standardized error messages.
-func PrintError(msg string) {
-	fmt.Printf("\033[31m❌ %s\033[0m\n", msg)
 }

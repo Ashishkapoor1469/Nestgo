@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -39,6 +40,9 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 // --- Request Binding ---
 
 // Bind decodes the JSON request body into the given struct.
+// It automatically runs validation in this order:
+//  1. If the struct implements Validatable, calls Validate().
+//  2. If the struct has `validate` tags, runs tag-based ValidateStruct().
 func (c *Context) Bind(v any) error {
 	if c.Request.Body == nil {
 		return fmt.Errorf("request body is empty")
@@ -50,14 +54,46 @@ func (c *Context) Bind(v any) error {
 		return fmt.Errorf("invalid request body: %w", err)
 	}
 
-	// Run validation if the struct implements Validatable.
+	// Run interface-based validation if available.
 	if val, ok := v.(Validatable); ok {
 		if err := val.Validate(); err != nil {
 			return err
 		}
 	}
 
+	// Run tag-based validation if validate tags exist.
+	if HasValidateTags(v) {
+		if err := ValidateStruct(v); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+// BindAndValidate is an explicit combined bind + validate method.
+// Unlike Bind, this always runs both JSON decode and tag-based validation.
+func (c *Context) BindAndValidate(v any) error {
+	return c.Bind(v)
+}
+
+// ValidationErrorResponse sends a structured validation error response.
+// This is designed for use with *ValidationErrors from the validation system.
+func (c *Context) ValidationErrorResponse(err error) error {
+	if ve, ok := err.(*ValidationErrors); ok {
+		fields := make(map[string]string)
+		for _, e := range ve.Errors {
+			fields[e.Field] = e.Message
+		}
+		return c.JSON(422, map[string]any{
+			"error":  "Validation failed",
+			"fields": fields,
+		})
+	}
+	return c.JSON(400, map[string]any{
+		"error":   "Bad Request",
+		"message": err.Error(),
+	})
 }
 
 // Param returns a URL path parameter.
@@ -122,6 +158,32 @@ func (c *Context) BearerToken() string {
 	}
 	return ""
 }
+
+// RequestID returns the unique request ID.
+func (c *Context) RequestID() string {
+	return c.Header("X-Request-ID")
+}
+
+// User returns the authenticated user ID from the context (set by auth guard).
+func (c *Context) User() string {
+	if id, ok := c.Get("user_id"); ok {
+		if idStr, ok := id.(string); ok {
+			return idStr
+		}
+	}
+	return ""
+}
+
+// Logger returns a request-scoped logger.
+func (c *Context) Logger() *slog.Logger {
+	if l, ok := c.Get("logger"); ok {
+		if logger, ok := l.(*slog.Logger); ok {
+			return logger
+		}
+	}
+	return slog.Default().With("request_id", c.RequestID())
+}
+
 
 // --- Context Values ---
 

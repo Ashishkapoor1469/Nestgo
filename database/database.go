@@ -85,6 +85,16 @@ func (d *Database) DB() *sql.DB {
 	return d.db
 }
 
+// Driver returns the configured database driver name.
+func (d *Database) Driver() string {
+	return d.config.Driver
+}
+
+// Logger returns the database logger.
+func (d *Database) Logger() *slog.Logger {
+	return d.logger
+}
+
 // Close closes the database connection.
 func (d *Database) Close() error {
 	d.logger.Info("closing database connection")
@@ -193,9 +203,11 @@ func (r *Repository[T]) Exec(ctx context.Context, query string, args ...any) (sq
 	return r.db.db.ExecContext(ctx, query, args...)
 }
 
-// --- Migration ---
+// --- Migration (Deprecated) ---
 
-// Migration represents a database migration.
+// Deprecated: Migration is the legacy migration type.
+// Use the database/migration package for production-grade migrations with
+// transaction safety, rollback support, and CLI integration.
 type Migration struct {
 	Version     string
 	Description string
@@ -203,14 +215,16 @@ type Migration struct {
 	Down        func(db *sql.DB) error
 }
 
-// Migrator manages database migrations.
+// Deprecated: Migrator is the legacy migration manager.
+// Use the database/migration.Engine for production-grade migrations.
 type Migrator struct {
 	db         *Database
 	migrations []Migration
 	logger     *slog.Logger
 }
 
-// NewMigrator creates a new migrator.
+// Deprecated: NewMigrator creates a new legacy migrator.
+// Use migration.NewEngine() from the database/migration package instead.
 func NewMigrator(db *Database) *Migrator {
 	return &Migrator{
 		db:     db,
