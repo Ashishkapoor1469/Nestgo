@@ -21,7 +21,7 @@ func NewCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE:  runNew,
 	}
-	cmd.Flags().StringP("template", "t", "rest", "Project template: rest, microservice, graphql")
+	cmd.Flags().StringP("template", "t", "rest", "Project template: rest, microservice")
 	return cmd
 }
 
@@ -29,6 +29,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 	name := args[0]
 	tmpl, _ := cmd.Flags().GetString("template")
 
+	utils.PrintBanner()
 	utils.PrintHeader("Creating NestGo Project: " + name)
 	utils.PrintInfo("Template: " + tmpl)
 	fmt.Println()
@@ -41,26 +42,20 @@ func runNew(cmd *cobra.Command, args []string) error {
 	// Define project structure.
 	dirs := []string{
 		"cmd/server",
-		"internal/modules",
+		"internal/modules/health",
 		"internal/common/dto",
 		"internal/common/middleware",
 		"internal/common/guards",
-		"internal/common/schemas",
 		"internal/config",
 		"migrations",
 		"test",
 	}
 
-	// Add template-specific directories.
-	switch tmpl {
-	case "microservice":
+	if tmpl == "microservice" {
 		dirs = append(dirs, "internal/health", "internal/metrics")
-	case "graphql":
-		dirs = append(dirs, "internal/graphql/schema", "internal/graphql/resolvers")
 	}
 
 	spinner := utils.StartSpinner("Creating project structure...")
-
 	for _, dir := range dirs {
 		path := filepath.Join(name, dir)
 		if err := os.MkdirAll(path, 0755); err != nil {
@@ -68,30 +63,34 @@ func runNew(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}
-
 	spinner.StopWithSuccess("Project structure created")
 
 	// Generate files.
-	files := map[string]string{
-		"go.mod":                         goModTemplate,
-		"cmd/server/main.go":             mainTemplate,
-		"internal/config/config.go":      configTemplate,
-		"internal/modules/app_module.go": appModuleTemplate,
-		".env":                           envTemplate,
-		".env.example":                   envExampleTemplate,
-		".gitignore":                     gitignoreTemplate,
-		"Makefile":                       makefileTemplate,
-		"README.md":                      readmeTemplate,
+	modName := "github.com/" + name
+	data := map[string]string{
+		"Name":       name,
+		"ModuleName": modName,
 	}
 
-	modName := "github.com/" + name
+	files := map[string]string{
+		"go.mod":                                          goModTemplate,
+		"cmd/server/main.go":                             mainTemplate,
+		"internal/config/config.go":                      configTemplate,
+		"internal/modules/app_module.go":                 appModuleTemplate,
+		"internal/modules/health/health_controller.go":   healthControllerTemplate,
+		"internal/modules/health/health_module.go":       healthModuleTemplate,
+		".env":                                           envTemplate,
+		".env.example":                                   envExampleTemplate,
+		".gitignore":                                     gitignoreTemplate,
+		"nestgo.json":                                    nestgoJSONTemplate,
+		"Makefile":                                       makefileTemplate,
+		"README.md":                                      projectReadmeTemplate,
+	}
 
+	fmt.Println()
 	for path, tmplStr := range files {
 		fullPath := filepath.Join(name, path)
-		if err := writeTemplate(fullPath, tmplStr, map[string]string{
-			"Name":       name,
-			"ModuleName": modName,
-		}); err != nil {
+		if err := writeTemplate(fullPath, tmplStr, data); err != nil {
 			return fmt.Errorf("failed to create %s: %w", path, err)
 		}
 		utils.PrintStep("📄", path)
@@ -115,13 +114,16 @@ func runNew(cmd *cobra.Command, args []string) error {
 	tidySpinner.StopWithSuccess("Dependencies installed")
 
 	fmt.Println()
-	utils.PrintSuccess("Project " + name + " created successfully!")
+	utils.PrintSuccess("Project '" + name + "' created successfully!")
 	fmt.Println()
-	utils.PrintDim("  Get started:")
+	fmt.Println("  Next steps:")
 	utils.PrintDim("    cd " + name)
 	utils.PrintDim("    nestgo dev")
 	fmt.Println()
-	utils.PrintDim("  Generate a resource:")
+	fmt.Println("  Your app starts with:")
+	utils.PrintDim("    GET /api/health  →  { \"status\": \"ok\" }")
+	fmt.Println()
+	fmt.Println("  Generate a resource:")
 	utils.PrintDim("    nestgo generate resource users")
 	fmt.Println()
 
@@ -135,12 +137,11 @@ func writeTemplate(path, tmplStr string, data any) error {
 	}
 
 	funcMap := template.FuncMap{
-		"title": strings.Title,
 		"lower": strings.ToLower,
 		"upper": strings.ToUpper,
 	}
 
-	tmpl, err := template.New("file").Funcs(funcMap).Parse(tmplStr)
+	t, err := template.New("file").Funcs(funcMap).Parse(tmplStr)
 	if err != nil {
 		return fmt.Errorf("template parse error: %w", err)
 	}
@@ -151,13 +152,15 @@ func writeTemplate(path, tmplStr string, data any) error {
 	}
 	defer f.Close()
 
-	return tmpl.Execute(f, data)
+	return t.Execute(f, data)
 }
 
-// --- Project Templates ---
+// ─── Project Templates ────────────────────────────────────────────────────────
 
 var goModTemplate = `module {{.ModuleName}}
+
 go 1.22
+
 require (
 	github.com/Ashishkapoor1469/Nestgo v0.3.0
 )
@@ -166,7 +169,9 @@ require (
 var mainTemplate = `package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/Ashishkapoor1469/Nestgo/core"
 	"github.com/Ashishkapoor1469/Nestgo/config"
@@ -175,20 +180,26 @@ import (
 )
 
 func main() {
-	// Load configuration.
+	// Load configuration from .env
 	cfg := config.MustLoad[appconfig.AppConfig](".")
+
+	port := cfg.Port
+	if p := os.Getenv("PORT"); p != "" {
+		port = p
+	}
 
 	// Create the application.
 	app := core.New(
-		core.WithAddress(":"+cfg.Port),
+		core.WithAddress(":"+port),
 		core.WithGlobalPrefix("/api"),
 	)
 
-	// Register root module.
+	// Register root module (which imports all feature modules).
 	app.RegisterModule(&modules.AppModule{})
 
-	// Start the server.
-	log.Printf("🚀 Starting %s on :%s", "{{.Name}}", cfg.Port)
+	fmt.Printf("\n  🚀 %s running at http://localhost:%s\n", "{{.Name}}", port)
+	fmt.Printf("  🩺 Health check: http://localhost:%s/api/health\n\n", port)
+
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
 	}
@@ -197,55 +208,130 @@ func main() {
 
 var configTemplate = `package config
 
-// AppConfig holds the application configuration.
+// AppConfig holds the application configuration loaded from environment.
 type AppConfig struct {
-	Port        string ` + "`" + `env:"PORT" default:"3000"` + "`" + `
-	Environment string ` + "`" + `env:"APP_ENV" default:"development"` + "`" + `
-	DBHost      string ` + "`" + `env:"DB_HOST" default:"localhost"` + "`" + `
-	DBPort      int    ` + "`" + `env:"DB_PORT" default:"5432"` + "`" + `
-	DBUser      string ` + "`" + `env:"DB_USER" default:"postgres"` + "`" + `
+	Port        string ` + "`" + `env:"PORT"         default:"3000"` + "`" + `
+	Environment string ` + "`" + `env:"APP_ENV"      default:"development"` + "`" + `
+	DBHost      string ` + "`" + `env:"DB_HOST"      default:"localhost"` + "`" + `
+	DBPort      int    ` + "`" + `env:"DB_PORT"      default:"5432"` + "`" + `
+	DBUser      string ` + "`" + `env:"DB_USER"      default:"postgres"` + "`" + `
 	DBPassword  string ` + "`" + `env:"DB_PASSWORD"` + "`" + `
-	DBName      string ` + "`" + `env:"DB_NAME" default:"{{.Name}}"` + "`" + `
-	JWTSecret   string ` + "`" + `env:"JWT_SECRET" default:"change-me-in-production"` + "`" + `
+	DBName      string ` + "`" + `env:"DB_NAME"      default:"{{.Name}}"` + "`" + `
+	JWTSecret   string ` + "`" + `env:"JWT_SECRET"   default:"change-me-in-production"` + "`" + `
+}
+`
+
+var healthControllerTemplate = `package health
+
+import "github.com/Ashishkapoor1469/Nestgo/common"
+
+// HealthController handles health check requests.
+type HealthController struct{}
+
+// NewHealthController creates a new HealthController.
+func NewHealthController() *HealthController {
+	return &HealthController{}
+}
+
+// Prefix returns the route prefix.
+func (c *HealthController) Prefix() string {
+	return "/health"
+}
+
+// Routes returns the controller's route definitions.
+func (c *HealthController) Routes() []common.Route {
+	return []common.Route{
+		{
+			Method:  "GET",
+			Path:    "/",
+			Handler: c.Check,
+			Summary: "Health check",
+		},
+	}
+}
+
+// Check returns a 200 OK with status "ok".
+func (c *HealthController) Check(ctx *common.Context) error {
+	return ctx.OK(map[string]string{
+		"status": "ok",
+	})
+}
+`
+
+var healthModuleTemplate = `package health
+
+import (
+	"github.com/Ashishkapoor1469/Nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/di"
+)
+
+// HealthModule wires up the health check feature.
+type HealthModule struct{}
+
+func (m *HealthModule) Module() common.ModuleConfig {
+	controller := NewHealthController()
+	return common.ModuleConfig{
+		Name:        "health",
+		Controllers: []common.Controller{controller},
+		Providers:   []di.Provider{},
+	}
 }
 `
 
 var appModuleTemplate = `package modules
 
 import (
-	"github.com/Ashishkapoor1469/Nestgo/di"
 	"github.com/Ashishkapoor1469/Nestgo/common"
+	"github.com/Ashishkapoor1469/Nestgo/di"
+	"{{.ModuleName}}/internal/modules/health"
 )
 
-// AppModule is the root module of the application.
+// AppModule is the root module — import all feature modules here.
 type AppModule struct{}
 
 func (m *AppModule) Module() common.ModuleConfig {
 	return common.ModuleConfig{
-		Name:        "app",
-		Imports:     []common.Module{},
+		Name: "app",
+		Imports: []common.Module{
+			&health.HealthModule{},
+		},
 		Controllers: []common.Controller{},
 		Providers:   []di.Provider{},
 	}
 }
 `
 
-var envTemplate = `# {{.Name}} Environment Configuration
+var nestgoJSONTemplate = `{
+  "name": "{{.Name}}",
+  "version": "0.1.0",
+  "language": "go",
+  "entrypoint": "cmd/server/main.go",
+  "sourceRoot": "internal",
+  "prefix": "/api",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "outDir": "bin"
+  }
+}
+`
+
+var envTemplate = `# {{.Name}} — Environment Variables
 PORT=3000
 APP_ENV=development
 
-# Database
+# Database (configure when ready)
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=
 DB_NAME={{.Name}}
 
-# Auth
+# Security
 JWT_SECRET=change-me-in-production
 `
 
-var envExampleTemplate = `# {{.Name}} Environment Configuration
+var envExampleTemplate = `# {{.Name}} — Environment Variables Example
+# Copy this to .env and fill in your values
 PORT=3000
 APP_ENV=development
 
@@ -253,11 +339,11 @@ APP_ENV=development
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
-DB_PASSWORD=
+DB_PASSWORD=your-password-here
 DB_NAME={{.Name}}
 
-# Auth
-JWT_SECRET=
+# Security — CHANGE THIS IN PRODUCTION
+JWT_SECRET=your-secret-key-here
 `
 
 var gitignoreTemplate = `# Binaries
@@ -269,12 +355,13 @@ var gitignoreTemplate = `# Binaries
 /bin/
 /dist/
 
-# Test
+# Test output
 *.test
 *.out
 coverage.html
+coverage.out
 
-# Environment
+# Environment (never commit secrets)
 .env
 .env.local
 .env.*.local
@@ -293,176 +380,132 @@ Thumbs.db
 vendor/
 `
 
-var makefileTemplate = `.PHONY: dev build test lint run
+var makefileTemplate = `.PHONY: dev build test lint run tidy
 
-# Development
+# Development with hot reload
 dev:
-	@go run cmd/server/main.go
+	@nestgo dev
 
-# Build
+# Build production binary
 build:
-	@go build -ldflags="-s -w" -o bin/server cmd/server/main.go
+	@go build -ldflags="-s -w" -o bin/server ./cmd/server
 
-# Run production
+# Run production binary
 run: build
 	@./bin/server
 
-# Test
+# Run tests
 test:
-	@go test -v -race ./...
-
-# Test with coverage
-test-cover:
-	@go test -coverprofile=coverage.out ./...
-	@go tool cover -html=coverage.out -o coverage.html
+	@go test -v -race -cover ./...
 
 # Lint
 lint:
 	@golangci-lint run ./...
 
-# Tidy
+# Tidy dependencies
 tidy:
 	@go mod tidy
 
-# Generate
+# Generate a resource
 generate:
-	@go generate ./...
+	@nestgo generate resource $(name)
 `
 
-var readmeTemplate = `# {{.Name}}
- 
-A NestGo application.
- 
+var projectReadmeTemplate = `# {{.Name}}
+
+A production-ready API built with [NestGo](https://github.com/Ashishkapoor1469/Nestgo).
+
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://golang.org)
-[![NestGo](https://img.shields.io/badge/NestGo-Framework-E34F26)](https://github.com/Ashishkapoor1469/Nestgo)
- 
+[![NestGo](https://img.shields.io/badge/NestGo-v0.3.0-E34F26)](https://github.com/Ashishkapoor1469/Nestgo)
+
 ---
- 
+
 ## 🚀 Quick Start
- 
+
 ` + "```bash" + `
-# Install dependencies
-go mod tidy
- 
-# Start development server
+# Start development server with hot reload
 nestgo dev
 ` + "```" + `
- 
-**Your API is running at: http://localhost:3000/api**
- 
-> Note: All routes are prefixed with ` + "`/api`" + ` by default
- 
+
+Your API is live at: **http://localhost:3000/api**
+
 ---
- 
+
+## ✅ Built-in Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | ` + "`/api/health`" + ` | Health check → ` + "`{\"status\":\"ok\"}`" + ` |
+
+---
+
 ## 📁 Project Structure
- 
+
 ` + "```" + `
 {{.Name}}/
 ├── cmd/server/          # Application entry point
 ├── internal/
-│   ├── config/          # Configuration
-│   ├── modules/         # Feature modules
-│   └── common/          # Shared code (guards, middleware, etc.)
+│   ├── config/          # App configuration (env → struct)
+│   └── modules/         # Feature modules
+│       └── health/      # Built-in health check module
 ├── migrations/          # Database migrations
 ├── test/                # Integration tests
-├── .env                 # Environment variables
-├── Makefile             # Build scripts
-├── nestgo.yaml          # NestGo configuration
+├── .env                 # Environment variables (git-ignored)
+├── .env.example         # Example env (commit this)
+├── nestgo.json          # NestGo project config
+├── Makefile             # Convenience scripts
 └── go.mod
 ` + "```" + `
- 
+
 ---
- 
-## 🌐 API Endpoints
- 
-**Base URL:** ` + "`http://localhost:3000/api`" + `
- 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | ` + "`/api`" + ` | API welcome |
-| GET | ` + "`/api/health`" + ` | Health check |
- 
+
+## 🛠️ CLI Commands
+
 ` + "```bash" + `
-# Test the API
-curl http://localhost:3000/api
+# Development
+nestgo dev                         # Start with hot reload
+
+# Code generation
+nestgo generate resource users     # Full CRUD resource
+nestgo generate module payments    # Module only
+nestgo generate controller orders  # Controller only
+
+# Database
+nestgo migration:create add_users  # Create migration file
+nestgo migration:run               # Run pending migrations
+nestgo migration:rollback          # Rollback last migration
+
+# Utilities
+nestgo doctor                      # Project health check
+nestgo routes                      # Show all registered routes
+nestgo build                       # Build production binary
 ` + "```" + `
- 
+
 ---
- 
-## 🛠️ Commands
- 
-### Development
-` + "```bash" + `
-nestgo dev                          # Start with hot-reload
-nestgo dev --port=8080              # Custom port
-go run cmd/server/main.go           # Run directly
-` + "```" + `
- 
-### Code Generation
-` + "```bash" + `
-nestgo generate resource <name>     # Generate CRUD resource
-nestgo generate module <name>       # Generate module
-nestgo generate controller <name>   # Generate controller
-nestgo generate service <name>      # Generate service
-` + "```" + `
- 
-### Database
-` + "```bash" + `
-nestgo migration:create <name>      # Create migration
-nestgo migration:run                # Run migrations
-nestgo migration:rollback           # Rollback
-` + "```" + `
- 
-### Build & Test
-` + "```bash" + `
-make build                          # Build binary
-make test                           # Run tests
-nestgo doctor                       # Check project health
-nestgo graph                        # Visualize dependencies
-` + "```" + `
- 
----
- 
+
 ## ⚙️ Configuration
- 
-Create ` + "`.env`" + ` file:
- 
+
+Edit ` + "`.env`" + `:
+
 ` + "```bash" + `
-APP_NAME={{.Name}}
-APP_PORT=3000
-APP_GLOBAL_PREFIX=/api
- 
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_USER=postgres
-DATABASE_PASSWORD=password
-DATABASE_NAME={{.Name}}
- 
-JWT_SECRET=your-secret-key
-LOG_LEVEL=info
+PORT=3000
+APP_ENV=development
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your-password
+DB_NAME={{.Name}}
+JWT_SECRET=your-secret
 ` + "```" + `
- 
+
 ---
- 
-## 🐳 Docker
- 
-` + "```bash" + `
-# Build and run
-docker-compose up -d
- 
-# Or manually
-docker build -t {{.Name}} .
-docker run -p 3000:3000 {{.Name}}
-` + "```" + `
- 
----
- 
+
 ## 📚 Resources
- 
+
 - [NestGo Documentation](https://github.com/Ashishkapoor1469/Nestgo)
-- [Go Documentation](https://golang.org/doc/)
- 
+- [NestGo Examples](https://github.com/Ashishkapoor1469/Nestgo/tree/main/examples)
+
 ---
- 
-**Built with [NestGo](https://github.com/Ashishkapoor1469/Nestgo)** ⭐
+
+Built with ❤️ using [NestGo](https://github.com/Ashishkapoor1469/Nestgo)
 `

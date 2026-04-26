@@ -84,6 +84,7 @@ func main() {
 			{
 				Title: "📖 Info / Guides",
 				Commands: []utils.CommandEntry{
+					{Name: "version", Description: "Show CLI, framework, and Go version"},
 					{Name: "metrics", Description: "Learn how to enable the metrics endpoint"},
 					{Name: "versioning", Description: "Learn how to use API versioning"},
 				},
@@ -111,6 +112,7 @@ func main() {
 		commands.DocsCmd(),
 		commands.MetricsCmd(),
 		commands.VersioningCmd(),
+		commands.VersionCmd(Version),
 
 		// Colon-separated aliases for migration commands.
 		commands.MigrationCreateAliasCmd(),

@@ -2,10 +2,8 @@ package commands
 
 import (
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -17,8 +15,8 @@ import (
 func DoctorCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "doctor",
-		Short: "Analyze project structure and detect issues",
-		Long:  "Runs diagnostics on your NestGo project to detect anti-patterns, missing imports, and architectural issues.",
+		Short: "Run project health checks and diagnose issues",
+		Long:  "Checks project structure, configuration, dependencies, and environment. Provides actionable fixes for every issue found.",
 		RunE:  runDoctor,
 	}
 }
@@ -33,113 +31,146 @@ func GraphCmd() *cobra.Command {
 	}
 }
 
-// Deprecated: MigrateCmd is replaced by MigrationCmd in migration.go.
-// This function is kept for backward compatibility only.
-func MigrateCmd() *cobra.Command {
-	return MigrationCmd()
+type check struct {
+	label string
+	pass  bool
+	warn  bool
+	fix   string
 }
 
 func runDoctor(cmd *cobra.Command, args []string) error {
 	utils.EnsureProjectContext("doctor")
-	fmt.Println("\n🩺 NestGo Doctor — Project Health Check")
 
-	issues := 0
-	warnings := 0
-	passed := 0
+	fmt.Println()
+	fmt.Println("  🩺 NestGo Doctor — Project Health Check")
+	fmt.Println()
 
-	// Check 1: Project structure.
-	fmt.Println("  Checking project structure...")
-	requiredDirs := []string{"cmd", "internal"}
-	for _, dir := range requiredDirs {
-		if _, err := os.Stat(dir); os.IsNotExist(err) {
-			fmt.Printf("    ❌ Missing directory: %s/\n", dir)
-			issues++
-		} else {
-			fmt.Printf("    ✅ Found %s/\n", dir)
-			passed++
-		}
-	}
+	var checks []check
 
-	// Check 2: Go mod.
-	fmt.Println("\n  Checking Go module...")
+	// ── Checks ────────────────────────────────────────────────────────────────
+
+	// 1. go.mod
 	if _, err := os.Stat("go.mod"); os.IsNotExist(err) {
-		fmt.Println("    ❌ Missing go.mod file")
-		issues++
+		checks = append(checks, check{
+			label: "go.mod exists",
+			fix:   "Run: go mod init <your-module-name>",
+		})
 	} else {
-		fmt.Println("    ✅ go.mod found")
-		passed++
+		checks = append(checks, check{label: "go.mod exists", pass: true})
 	}
 
-	// Check 3: Environment files.
-	fmt.Println("\n  Checking configuration...")
+	// 2. nestgo.json
+	if _, err := os.Stat("nestgo.json"); os.IsNotExist(err) {
+		checks = append(checks, check{
+			label: "nestgo.json exists",
+			warn:  true,
+			fix:   "Create nestgo.json (run: nestgo new <name> to get one automatically)",
+		})
+	} else {
+		checks = append(checks, check{label: "nestgo.json exists", pass: true})
+	}
+
+	// 3. .env file
 	if _, err := os.Stat(".env"); os.IsNotExist(err) {
-		fmt.Println("    ⚠️  Missing .env file (recommended)")
-		warnings++
+		checks = append(checks, check{
+			label: ".env file exists",
+			warn:  true,
+			fix:   "Run: cp .env.example .env",
+		})
 	} else {
-		fmt.Println("    ✅ .env file found")
-		passed++
+		checks = append(checks, check{label: ".env file exists", pass: true})
 	}
 
+	// 4. .env.example
 	if _, err := os.Stat(".env.example"); os.IsNotExist(err) {
-		fmt.Println("    ⚠️  Missing .env.example file (recommended for team)")
-		warnings++
+		checks = append(checks, check{
+			label: ".env.example exists",
+			warn:  true,
+			fix:   "Create .env.example so teammates can set up their environment",
+		})
 	} else {
-		fmt.Println("    ✅ .env.example found")
-		passed++
+		checks = append(checks, check{label: ".env.example exists", pass: true})
 	}
 
-	// Check 4: Find modules.
-	fmt.Println("\n  Scanning modules...")
-	moduleCount := 0
-	controllerCount := 0
-	serviceCount := 0
-
-	_ = filepath.Walk("internal/modules", func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
-			return nil
-		}
-		if filepath.Ext(path) != ".go" {
-			return nil
-		}
-
-		content, err := os.ReadFile(path)
-		if err != nil {
-			return nil
-		}
-
-		src := string(content)
-		if strings.Contains(src, "ModuleConfig") {
-			moduleCount++
-		}
-		if strings.Contains(src, "ControllerDefinition") || strings.Contains(src, "Prefix()") {
-			controllerCount++
-		}
-		if strings.Contains(src, "Service struct") {
-			serviceCount++
-		}
-
-		return nil
-	})
-
-	fmt.Printf("    📦 Modules: %d\n", moduleCount)
-	fmt.Printf("    🎮 Controllers: %d\n", controllerCount)
-	fmt.Printf("    ⚙️  Services: %d\n", serviceCount)
-
-	// Check 5: Look for common anti-patterns.
-	fmt.Println("\n  Checking for anti-patterns...")
-	antiPatterns := checkAntiPatterns()
-	if len(antiPatterns) == 0 {
-		fmt.Println("    ✅ No anti-patterns detected")
-		passed++
+	// 5. cmd/ directory
+	if _, err := os.Stat("cmd"); os.IsNotExist(err) {
+		checks = append(checks, check{
+			label: "cmd/ directory exists",
+			fix:   "Create cmd/server/main.go — this is your entry point",
+		})
 	} else {
-		for _, ap := range antiPatterns {
-			fmt.Printf("    ⚠️  %s\n", ap)
-			warnings++
-		}
+		checks = append(checks, check{label: "cmd/ directory exists", pass: true})
 	}
 
-	// Check 6: Test files.
-	fmt.Println("\n  Checking test coverage...")
+	// 6. internal/ directory
+	if _, err := os.Stat("internal"); os.IsNotExist(err) {
+		checks = append(checks, check{
+			label: "internal/ directory exists",
+			fix:   "Create internal/modules/ to hold your feature modules",
+		})
+	} else {
+		checks = append(checks, check{label: "internal/ directory exists", pass: true})
+	}
+
+	// 7. internal/modules/
+	if _, err := os.Stat(filepath.Join("internal", "modules")); os.IsNotExist(err) {
+		checks = append(checks, check{
+			label: "internal/modules/ exists",
+			warn:  true,
+			fix:   "Create internal/modules/ and add your feature modules there",
+		})
+	} else {
+		checks = append(checks, check{label: "internal/modules/ exists", pass: true})
+	}
+
+	// 8. migrations/ directory
+	if _, err := os.Stat("migrations"); os.IsNotExist(err) {
+		checks = append(checks, check{
+			label: "migrations/ directory exists",
+			warn:  true,
+			fix:   "Run: mkdir migrations",
+		})
+	} else {
+		checks = append(checks, check{label: "migrations/ directory exists", pass: true})
+	}
+
+	// 9. Entry point exists
+	entry := findEntryPoint()
+	if entry == "" {
+		checks = append(checks, check{
+			label: "Entry point (main.go) found",
+			fix:   "Create cmd/server/main.go — see the NestGo docs for a starter template",
+		})
+	} else {
+		checks = append(checks, check{label: fmt.Sprintf("Entry point found (%s)", entry), pass: true})
+	}
+
+	// 10. Go toolchain
+	goCmd := exec.Command("go", "version")
+	goOut, err := goCmd.Output()
+	if err != nil {
+		checks = append(checks, check{
+			label: "Go toolchain available",
+			fix:   "Install Go from https://golang.org/dl/",
+		})
+	} else {
+		goVer := strings.TrimSpace(strings.TrimPrefix(string(goOut), "go version "))
+		checks = append(checks, check{label: fmt.Sprintf("Go toolchain: %s", goVer), pass: true})
+	}
+
+	// 11. go mod dependencies
+	tidyCmd := exec.Command("go", "mod", "verify")
+	if err := tidyCmd.Run(); err != nil {
+		checks = append(checks, check{
+			label: "Dependencies verified",
+			warn:  true,
+			fix:   "Run: go mod tidy",
+		})
+	} else {
+		checks = append(checks, check{label: "Dependencies verified", pass: true})
+	}
+
+	// 12. Test files
 	testCount := 0
 	_ = filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
@@ -151,100 +182,128 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		return nil
 	})
 	if testCount == 0 {
-		fmt.Println("    ⚠️  No test files found")
-		warnings++
+		checks = append(checks, check{
+			label: "Test files found",
+			warn:  true,
+			fix:   "Run: nestgo generate test <module-name> to scaffold tests",
+		})
 	} else {
-		fmt.Printf("    ✅ Found %d test files\n", testCount)
-		passed++
+		checks = append(checks, check{label: fmt.Sprintf("Test files found (%d)", testCount), pass: true})
 	}
 
-	// Summary.
-	fmt.Println("\n  ─────────────────────────────────")
+	// ── Print Results ──────────────────────────────────────────────────────────
+
+	issues := 0
+	warnings := 0
+	passed := 0
+
+	for _, c := range checks {
+		switch {
+		case c.pass:
+			fmt.Printf("  ✅ %s\n", c.label)
+			passed++
+		case c.warn:
+			fmt.Printf("  ⚠️  %s\n", c.label)
+			if c.fix != "" {
+				fmt.Printf("      → %s\n", c.fix)
+			}
+			warnings++
+		default:
+			fmt.Printf("  ❌ %s\n", c.label)
+			if c.fix != "" {
+				fmt.Printf("      → %s\n", c.fix)
+			}
+			issues++
+		}
+	}
+
+	// Summary
+	fmt.Println()
+	fmt.Println("  ─────────────────────────────────")
 	fmt.Printf("  ✅ Passed:   %d\n", passed)
 	fmt.Printf("  ⚠️  Warnings: %d\n", warnings)
 	fmt.Printf("  ❌ Issues:   %d\n", issues)
 	fmt.Println("  ─────────────────────────────────")
 
-	if issues > 0 {
-		fmt.Println("\n  🔴 Project has issues that should be fixed.")
-	} else if warnings > 0 {
-		fmt.Println("\n  🟡 Project is healthy with some recommendations.")
-	} else {
-		fmt.Println("\n  🟢 Project is in great shape!")
+	switch {
+	case issues > 0:
+		fmt.Println("\n  🔴 Project has critical issues that must be fixed.")
+	case warnings > 0:
+		fmt.Println("\n  🟡 Project is healthy but has some recommendations.")
+	default:
+		fmt.Println("\n  🟢 Project is in excellent shape!")
 	}
 	fmt.Println()
 
+	// Module scan
+	fmt.Println("  📦 Module Summary:")
+	moduleCount, controllerCount, serviceCount := scanModules()
+	fmt.Printf("     Modules:     %d\n", moduleCount)
+	fmt.Printf("     Controllers: %d\n", controllerCount)
+	fmt.Printf("     Services:    %d\n", serviceCount)
+	fmt.Println()
+
 	return nil
+}
+
+func scanModules() (modules, controllers, services int) {
+	_ = filepath.Walk("internal/modules", func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() || filepath.Ext(path) != ".go" {
+			return nil
+		}
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return nil
+		}
+		src := string(content)
+		if strings.Contains(src, "ModuleConfig") {
+			modules++
+		}
+		if strings.Contains(src, "Prefix()") {
+			controllers++
+		}
+		if strings.Contains(src, "Service struct") {
+			services++
+		}
+		return nil
+	})
+	return
 }
 
 func runGraph(cmd *cobra.Command, args []string) error {
 	utils.EnsureProjectContext("graph")
-	fmt.Println("\n📊 Module Dependency Graph")
 
-	modules := findModules()
-	if len(modules) == 0 {
+	fmt.Println()
+	fmt.Println("  📊 Module Dependency Graph")
+	fmt.Println()
+
+	mods := findModules()
+	if len(mods) == 0 {
 		fmt.Println("  No modules found in internal/modules/")
+		fmt.Println("  Run: nestgo generate module <name>")
+		fmt.Println()
 		return nil
 	}
 
-	for _, mod := range modules {
-		fmt.Printf("  📦 %s\n", mod.name)
-		for _, dep := range mod.imports {
-			fmt.Printf("     └── %s\n", dep)
+	for i, mod := range mods {
+		connector := "├──"
+		if i == len(mods)-1 {
+			connector = "└──"
 		}
-		if len(mod.controllers) > 0 {
-			for _, ctrl := range mod.controllers {
-				fmt.Printf("     ├── 🎮 %s\n", ctrl)
-			}
+		fmt.Printf("  %s 📦 %s\n", connector, mod.name)
+		for _, ctrl := range mod.controllers {
+			fmt.Printf("  │    ├── 🎮 %s\n", ctrl)
 		}
-		if len(mod.services) > 0 {
-			for _, svc := range mod.services {
-				fmt.Printf("     ├── ⚙️  %s\n", svc)
-			}
+		for _, svc := range mod.services {
+			fmt.Printf("  │    └── ⚙️  %s\n", svc)
 		}
 	}
 	fmt.Println()
-
 	return nil
-}
-
-
-
-
-func checkAntiPatterns() []string {
-	var issues []string
-
-	_ = filepath.Walk("internal", func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() || filepath.Ext(path) != ".go" {
-			return nil
-		}
-
-		fset := token.NewFileSet()
-		node, err := parser.ParseFile(fset, path, nil, parser.ImportsOnly)
-		if err != nil {
-			return nil
-		}
-
-		for _, imp := range node.Imports {
-			importPath := strings.Trim(imp.Path.Value, `"`)
-			if importPath == "fmt" {
-				// Check if fmt.Println is used (should use logger instead).
-				content, _ := os.ReadFile(path)
-				if strings.Contains(string(content), "fmt.Println") {
-					issues = append(issues, fmt.Sprintf("%s: Use structured logger instead of fmt.Println", path))
-				}
-			}
-		}
-
-		return nil
-	})
-
-	return issues
 }
 
 type moduleInfo struct {
 	name        string
-	imports     []string
 	controllers []string
 	services    []string
 }
@@ -252,8 +311,7 @@ type moduleInfo struct {
 func findModules() []moduleInfo {
 	var modules []moduleInfo
 
-	modulesDir := filepath.Join("internal", "modules")
-	entries, err := os.ReadDir(modulesDir)
+	entries, err := os.ReadDir(filepath.Join("internal", "modules"))
 	if err != nil {
 		return nil
 	}
@@ -262,37 +320,28 @@ func findModules() []moduleInfo {
 		if !entry.IsDir() {
 			continue
 		}
-
-		modDir := filepath.Join(modulesDir, entry.Name())
 		mod := moduleInfo{name: entry.Name()}
 
+		modDir := filepath.Join("internal", "modules", entry.Name())
 		_ = filepath.Walk(modDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() || filepath.Ext(path) != ".go" {
 				return nil
 			}
-
-			fset := token.NewFileSet()
-			node, parseErr := parser.ParseFile(fset, path, nil, 0)
-			if parseErr != nil {
+			content, err := os.ReadFile(path)
+			if err != nil {
 				return nil
 			}
+			src := string(content)
 
-			for _, decl := range node.Decls {
-				if genDecl, ok := decl.(*ast.GenDecl); ok {
-					for _, spec := range genDecl.Specs {
-						if typeSpec, ok := spec.(*ast.TypeSpec); ok {
-							name := typeSpec.Name.Name
-							if strings.HasSuffix(name, "Controller") {
-								mod.controllers = append(mod.controllers, name)
-							}
-							if strings.HasSuffix(name, "Service") {
-								mod.services = append(mod.services, name)
-							}
-						}
-					}
-				}
+			base := filepath.Base(path)
+			if strings.HasSuffix(base, "controller.go") || strings.Contains(src, "Prefix()") {
+				name := strings.TrimSuffix(base, ".go")
+				mod.controllers = append(mod.controllers, name)
 			}
-
+			if strings.HasSuffix(base, "service.go") {
+				name := strings.TrimSuffix(base, ".go")
+				mod.services = append(mod.services, name)
+			}
 			return nil
 		})
 
@@ -300,4 +349,26 @@ func findModules() []moduleInfo {
 	}
 
 	return modules
+}
+
+// checkAntiPatterns checks for common anti-patterns.
+func checkAntiPatterns() []string {
+	var issues []string
+
+	_ = filepath.Walk("internal", func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() || filepath.Ext(path) != ".go" {
+			return nil
+		}
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return nil
+		}
+		src := string(content)
+		if strings.Contains(src, "fmt.Println") {
+			issues = append(issues, fmt.Sprintf("%s: Use structured logger instead of fmt.Println", path))
+		}
+		return nil
+	})
+
+	return issues
 }

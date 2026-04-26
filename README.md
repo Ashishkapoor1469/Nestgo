@@ -1,234 +1,329 @@
-<div align="center">
-  <img src="./assets/logo.png" alt="NestGo Logo" width="100%"/>
+<p align="center">
+  <img src="assets/logo.webp" alt="NestGo Logo" width="120" />
+</p>
 
-  <h1>🚀 NestGo Framework</h1>
+<h1 align="center">NestGo</h1>
 
-  <p><b>A Next-Generation, Production-Grade Backend Architecture for Go</b></p>
-  
-  <p>
-    <a href="https://golang.org/doc/devel/release.html"><img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=for-the-badge&logo=go" alt="Go Version" /></a>
-    <a href="https://github.com/Ashishkapoor1469/Nestgo"><img src="https://img.shields.io/badge/Architecture-Modular-05122A?style=for-the-badge&logo=codeigniter" alt="Architecture" /></a>
-    <a href="https://github.com/go-chi/chi"><img src="https://img.shields.io/badge/Router-Chi-E34F26?style=for-the-badge&logo=databricks" alt="Powered by Chi" /></a>
-    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-success?style=for-the-badge" alt="License" /></a>
-  </p>
+<p align="center">
+  A progressive Go framework for building efficient, reliable, and scalable server-side applications.
+</p>
 
-  <p>
-    <em>Inspired by the brilliant developer experience of NestJS, built from the ground up with Idiomatic Go. Zero reflection magic. Absolute type safety. Massive performance.</em>
-  </p>
-</div>
-
----
-
-## 🌟 Philosophy & Vision
-
-While micro-frameworks like `chi`, `fiber`, and `gin` are fantastic for routing, they leave large-scale architectural layout entirely to the developer. As applications grow to dozens of modules running complex pipelines, "do-it-yourself" architectures often break down into spaghetti code and unstable DI cycles.
-
-**NestGo** solves this by providing the structural maturity and conventions of Enterprise frameworks (like NestJS or Spring Boot), while strictly adhering to Go's philosophy:
-- **No Runtime Reflection Magic**: We use explicit interfaces and pure Go functions for constructor-based dependency injection.
-- **Strictly Typed**: Compile-time safe dependencies; if your graph is broken, your build fails instantly.
-- **Convention Over Configuration**: A highly opinionated structure powered by a brilliant CLI tool.
+<p align="center">
+  <a href="https://github.com/Ashishkapoor1469/Nestgo/actions/workflows/ci.yml">
+    <img src="https://github.com/Ashishkapoor1469/Nestgo/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
+  <a href="https://pkg.go.dev/github.com/Ashishkapoor1469/Nestgo">
+    <img src="https://pkg.go.dev/badge/github.com/Ashishkapoor1469/Nestgo.svg" alt="Go Reference" />
+  </a>
+  <a href="https://github.com/Ashishkapoor1469/Nestgo/releases">
+    <img src="https://img.shields.io/github/v/release/Ashishkapoor1469/Nestgo?color=blue" alt="Latest Release" />
+  </a>
+  <img src="https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go" alt="Go Version" />
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License" />
+</p>
 
 ---
 
-## 🔥 Key Features
+## What is NestGo?
 
-| Category | Capability |
-|---|---|
-| **🏗 Modular Architecture** | Built-in module system with topological dependency resolution (DAG) and cycle detection. |
-| **💉 Explicit DI Container** | Constructor-based dependency injection supporting Singleton and Request lifecycles. |
-| **🛡 Advanced Pipelines** | Enterprise middleware, RBAC Guards, Response Interceptors, and centralized Exception Filters. |
-| **🚀 High Performance** | Lightning fast native routing built on [Chi](https://github.com/go-chi/chi). |
-| **🛠 Developer CLI** | Interactive `nestgo generate` wizard, `nestgo routes` explorer, and `nestgo docs:generate` (OpenAPI). |
-| **🌐 API Versioning** | Built-in `VersionedRouter` for cleanly isolated `/api/v1` and `/api/v2` scoping with standard sunset headers. |
-| **✅ Schema Validation** | Powerful struct tag-based declarative request body validation (`validate:"required,email"`). |
-| **⚙️ Observability Core** | Built-in plugins for Prometheus metrics/status-code tracking (`nestgo metrics`), struct JSON logging, and advanced health endpoints. |
+NestGo is an opinionated, modular backend framework for Go — inspired by NestJS — that brings **enterprise-grade architecture** to Go development without sacrificing performance.
+
+It gives you:
+- **Modular architecture** with automatic dependency resolution
+- **A powerful CLI** (`nestgo`) that scaffolds, generates, and runs your app
+- **Compile-time dependency injection** — no reflection, no magic, full type safety
+- **Built-in middleware**, guards, interceptors, and lifecycle hooks
+- **Production-ready from day one** — not a toy, not a micro-library
 
 ---
 
-## 📦 Built-In Infrastructure Support
+## Why NestGo?
 
-NestGo understands what modern backend systems actually need before they go to production.
-
-```mermaid
-graph TD;
-    App[NestGo Application]
-    App --> ModA[Users Module]
-    App --> ModB[Orders Module]
-    App --> ModC[Auth Module]
-    
-    subgraph Core_Engine
-        DI[Dependency Injector]
-        Router[HTTP Chi Router]
-        Hooks[Lifecycle Hooks]
-    end
-    App --> Core_Engine
-    
-    subgraph Integrated_Subsystems
-        Plugins[Prometheus / OpenTelemetry]
-        Events[Sync / Async Event Bus]
-        Jobs[Cron / Background Workers]
-        WS[WebSocket Real-Time Gateway]
-    end
-    App -.-> Integrated_Subsystems
-```
+| Feature | NestGo | Gin | Fiber |
+|---------|--------|-----|-------|
+| Modular Architecture | ✅ Built-in | ❌ Manual | ❌ Manual |
+| Dependency Injection | ✅ Compile-time | ❌ None | ❌ None |
+| CLI Tooling | ✅ Advanced | ❌ None | ❌ None |
+| Code Generation | ✅ Full CRUD | ❌ None | ❌ None |
+| Architecture Linting | ✅ Built-in | ❌ Manual | ❌ Manual |
+| Route Explorer (AST) | ✅ Built-in | ❌ None | ❌ None |
+| Migration System | ✅ Built-in | ❌ Manual | ❌ Manual |
+| Performance | ✅ Native Go | ✅ Native Go | ✅ Native Go |
 
 ---
 
-## 🚀 Quick Start
-
-### 1. Install the CLI Architecture Globally
-The heart of the developer experience is the CLI. Grab it globally:
+## Installation
 
 ```bash
 go install github.com/Ashishkapoor1469/Nestgo/cmd/nestgo@latest
 ```
 
-The CLI natively integrates with your shell. Enable autocompletions for extreme speed:
-```bash
-# Add to your shell profile (~/.bashrc, ~/.zshrc)
-source <(nestgo completion bash)
-# OR
-source <(nestgo completion zsh)
-```
-
-### 2. Scaffold Your Next Big Idea
-Create a perfectly structured new project in under 3 seconds:
+Verify installation:
 
 ```bash
-nestgo new my-app
-cd my-app
-nestgo dev  # Starts the hot-reloading development server
-```
-
-### 3. Generate Components Interactively
-Need a fully wired CRUD slice or an authentication module? Run the interactive wizard or pass arguments directly:
-
-```bash
-nestgo generate             # Opens interactive component wizard
-nestgo generate resource products
-nestgo generate auth        # Scaffolds production-ready JWT authentication
-```
-
-### 4. Explore your APIs
-You can visualize all of your project's registered routes securely via static AST analysis without even booting your server!
-
-```bash
-nestgo routes
-# Or generate standard OpenAPI v3 docs
-nestgo docs:generate
+nestgo version
 ```
 
 ---
 
-## 🧠 The Anatomy of a NestGo App
+## Quick Start
 
-### 1. Controllers (The Presentation Layer)
-Controllers in NestGo implement a simple interface. They define paths and register route definitions explicitly to avoid reflection lookups.
+```bash
+# 1. Create a new project
+nestgo new myapp
 
-```go
-import (
-    "github.com/Ashishkapoor1469/Nestgo/common"
-)
+# 2. Enter the directory
+cd myapp
 
-type UserController struct {
-    service *UserService // Automatically injected!
-}
-
-func (c *UserController) Prefix() string {
-    return "/users"
-}
-
-func (c *UserController) Routes() []common.Route {
-    return []common.Route{
-        {Method: "GET", Path: "/", Handler: c.FindAll},
-        {Method: "POST", Path: "/", Handler: c.Create},
-    }
-}
-
-func (c *UserController) FindAll(ctx *common.Context) error {
-    return ctx.Paginated(c.service.GetUsers()) // Fluent context API
-}
+# 3. Start the development server
+nestgo dev
 ```
 
-### 2. Services (The Business Logic)
-Providers and Services are clean structs instantiated through pure Go constructor functions.
+Your API is live at **http://localhost:3000/api**
 
-```go
-type UserService struct {
-    db *database.Client
-}
-
-// The DI Container analyzes this signature and injects *database.Client
-func NewUserService(db *database.Client) *UserService {
-    return &UserService{db: db}
-}
+```bash
+# Built-in health check — works immediately
+curl http://localhost:3000/api/health
+# → { "status": "ok" }
 ```
 
-### 3. Modules (The Dependency Graph)
-Modules form the boundaries of your architecture, wrapping up controllers and services to expose them safely to the Application container.
+---
 
-```go
-import (
-    "github.com/Ashishkapoor1469/Nestgo/common"
-    "github.com/Ashishkapoor1469/Nestgo/di"
-)
+## Generate a Resource
 
-type UsersModule struct{}
+The signature feature of NestGo. One command generates a fully wired CRUD resource:
 
-func (m *UsersModule) Module() common.ModuleConfig {
-    service := NewUserService()
-    controller := NewUserController(service)
-
-    return common.ModuleConfig{
-        Name:        "users",
-        Controllers: []common.Controller{controller},
-        Providers: []di.Provider{
-            {Instance: service},
-        },
-    }
-}
+```bash
+nestgo generate resource users
 ```
 
-### 4. Bootstrap (The Launchpad)
-The initialization code is elegantly chained, allowing configuration overrides via functional options.
+This creates:
+
+```
+internal/modules/users/
+  ├── module.go       # Module definition with DI wiring
+  ├── controller.go   # REST controller with 5 CRUD routes
+  ├── service.go      # Business logic layer
+  ├── dto.go          # Create + Update DTOs
+  ├── entity.go       # Data model
+  └── users_test.go   # Table-driven service tests
+
+migrations/
+  └── 1714000000_create_users.sql   # Auto-generated migration
+```
+
+Then register it in `internal/modules/app_module.go`:
 
 ```go
-func main() {
-    app := core.New(
-        core.WithAddress(":8080"),
-        core.WithGlobalPrefix("/api/v1"),
-    )
-    
-    // Register the root module
-    app.RegisterModule(&app_module.AppModule{})
-    
-    // Liftoff 🚀
-    log.Fatal(app.Start())
+Imports: []common.Module{
+    &health.HealthModule{},
+    &users.UsersModule{},  // ← add this
+},
+```
+
+Your endpoints are now live:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/users` | List all users (paginated) |
+| `GET` | `/api/users/:id` | Get user by ID |
+| `POST` | `/api/users` | Create a user |
+| `PUT` | `/api/users/:id` | Update a user |
+| `DELETE` | `/api/users/:id` | Delete a user |
+
+---
+
+## Project Structure
+
+```
+myapp/
+├── cmd/server/
+│   └── main.go               # Application entry point
+├── internal/
+│   ├── config/
+│   │   └── config.go         # Env → struct config
+│   └── modules/
+│       ├── app_module.go     # Root module (imports all features)
+│       └── health/           # Built-in health module
+│           ├── health_controller.go
+│           └── health_module.go
+├── migrations/               # SQL migration files
+├── test/                     # Integration tests
+├── .env                      # Environment variables (git-ignored)
+├── .env.example              # Example env (commit this)
+├── nestgo.json               # NestGo project configuration
+├── Makefile                  # Convenience commands
+└── go.mod
+```
+
+---
+
+## CLI Reference
+
+### Project Commands
+
+```bash
+nestgo new <name>                  # Scaffold a new project
+nestgo dev                         # Start dev server with hot reload
+nestgo dev --port 8080             # Override port
+nestgo build                       # Build production binary
+nestgo build --output bin/api      # Custom output path
+```
+
+### Code Generation
+
+```bash
+# Full CRUD resource (recommended)
+nestgo generate resource <name>
+
+# Individual components
+nestgo generate module <name>
+nestgo generate controller <name>
+nestgo generate service <name>
+nestgo generate guard <name>
+nestgo generate middleware <name>
+nestgo generate interceptor <name>
+nestgo generate dto <name>
+nestgo generate test <name>
+
+# Auth scaffolding
+nestgo generate auth
+```
+
+### Database Migrations
+
+```bash
+nestgo migration:create <name>     # Create a new migration file
+nestgo migration:run               # Run all pending migrations
+nestgo migration:rollback          # Rollback the last migration
+nestgo migration:status            # Show migration status
+```
+
+### Diagnostics
+
+```bash
+nestgo doctor                      # Full project health check with fixes
+nestgo routes                      # Show all registered routes (AST-based)
+nestgo graph                       # Visualize module dependency graph
+nestgo lint-arch                   # Enforce clean architecture boundaries
+nestgo version                     # Show CLI + framework + Go versions
+```
+
+---
+
+## Configuration
+
+NestGo uses environment variables loaded from `.env`:
+
+```bash
+# Server
+PORT=3000
+APP_ENV=development            # development | production
+
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your-password
+DB_NAME=myapp
+
+# Security
+JWT_SECRET=change-me-in-production
+```
+
+The config is automatically mapped to a typed struct at startup:
+
+```go
+type AppConfig struct {
+    Port      string `env:"PORT"       default:"3000"`
+    DBHost    string `env:"DB_HOST"    default:"localhost"`
+    JWTSecret string `env:"JWT_SECRET"`
 }
 ```
 
 ---
 
-## 🛠️ Diagnostics & Tooling
+## Migration System
 
-To ensure your repository stays impeccably clean as it scales out to hundreds of developers, run zero-configuration diagnostics:
 ```bash
-# Verify your application health, test coverage, and catch anti-patterns
-nestgo doctor
+# Create a new migration
+nestgo migration:create add_users_table
 
-# Visualize your entire dependency graph layout
-nestgo graph
+# This creates:
+# migrations/1714000000_add_users_table.sql
 
-# Enforce clean architecture patterns by rejecting cross-module imports
-nestgo lint-arch
+# Run all pending migrations
+nestgo migration:run
 
-# Extract API structure and automatically scaffold `openapi.json`
-nestgo docs:generate
+# Rollback last migration
+nestgo migration:rollback
 ```
 
-## 📜 License
-Distributed under the MIT License. See `LICENSE` for more information.
+---
 
-<div align="center">
-    Made with ❤️ by the NestGo Community.
-</div>
+## Examples
+
+Working examples are in the [`/examples`](./examples) directory:
+
+| Example | Description |
+|---------|-------------|
+| [`basic-api`](./examples/basic-api) | Health check + users CRUD (in-memory) |
+| [`todo-api`](./examples/todo-api) | Full todo app with persistence |
+
+Run an example:
+
+```bash
+cd examples/basic-api
+go run ./cmd
+
+# GET /api/health  → { "status": "ok" }
+# GET /api/users   → list of users
+```
+
+---
+
+## Roadmap
+
+- [x] Modular architecture with DI
+- [x] CLI with code generation
+- [x] Hot reload dev server
+- [x] Route explorer (AST)
+- [x] Migration system
+- [x] Auth scaffolding (JWT + bcrypt)
+- [x] Architecture linter
+- [ ] WebSocket support (in progress)
+- [ ] OpenAPI/Swagger auto-generation
+- [ ] Plugin system
+- [ ] gRPC transport layer
+- [ ] Rate limiting middleware
+- [ ] Caching integration
+
+---
+
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+
+```bash
+# Clone the repo
+git clone https://github.com/Ashishkapoor1469/Nestgo.git
+cd Nestgo
+
+# Run tests
+go test ./...
+
+# Build the CLI
+go build -o nestgo ./cmd/nestgo
+```
+
+---
+
+## License
+
+MIT © [Ashish Kapoor](https://github.com/Ashishkapoor1469)
+
+---
+
+<p align="center">
+  Built with ❤️ for Go developers who want more structure without more complexity.
+</p>
