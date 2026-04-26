@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 
-	"github.com/Ashishkapoor1469/Nestgo/core"
 	"github.com/Ashishkapoor1469/Nestgo/config"
-	"github.com/sample-app/internal/modules"
+	"github.com/Ashishkapoor1469/Nestgo/core"
 	appconfig "github.com/sample-app/internal/config"
+	"github.com/sample-app/internal/modules"
 )
 
 func main() {

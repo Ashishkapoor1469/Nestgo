@@ -200,9 +200,9 @@ func runInteractiveGenerate() error {
 	fmt.Println("    7. dto          (Data Transfer Object)")
 	fmt.Println("    8. test         (Test scaffolding)")
 	fmt.Println()
-	
+
 	fmt.Print(utils.StyleAccent.Render("  > Choose an option (1-8): "))
-	
+
 	var option int
 	_, err := fmt.Scanf("%d", &option)
 	if err != nil {
@@ -265,11 +265,11 @@ func generateResource(name string) error {
 	}
 
 	moduleFiles := map[string]string{
-		"module.go":     resourceModuleTemplate,
-		"controller.go": resourceControllerTemplate,
-		"service.go":    resourceServiceTemplate,
-		"dto.go":        resourceDTOTemplate,
-		"entity.go":     resourceEntityTemplate,
+		"module.go":       resourceModuleTemplate,
+		"controller.go":   resourceControllerTemplate,
+		"service.go":      resourceServiceTemplate,
+		"dto.go":          resourceDTOTemplate,
+		"entity.go":       resourceEntityTemplate,
 		name + "_test.go": resourceTestTemplate,
 	}
 

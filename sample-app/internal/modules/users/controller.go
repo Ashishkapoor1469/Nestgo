@@ -56,7 +56,6 @@ func (c *UsersController) FindOne(ctx *common.Context) error {
 	return ctx.OK(item)
 }
 
-
 // Update updates a user.
 func (c *UsersController) Update(ctx *common.Context) error {
 	id := ctx.Param("id")

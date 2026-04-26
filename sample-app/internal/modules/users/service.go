@@ -32,7 +32,7 @@ func (s *UsersService) FindAll(page, limit int) ([]*User, int, error) {
 		 FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
 		limit, offset,
 	)
-	
+
 	if err != nil {
 		return nil, 0, err
 	}
@@ -68,13 +68,13 @@ func (s *UsersService) FindByID(id string) (*User, error) {
 		 FROM users WHERE id = $1`,
 		id,
 	).Scan(&idInt, &u.Name, &u.Email, &u.CreatedAt, &u.UpdatedAt)
-	
+
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("user not found: %s", id)
 	} else if err != nil {
 		return nil, err
 	}
-	
+
 	u.ID = fmt.Sprintf("%d", idInt)
 	return &u, nil
 }

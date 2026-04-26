@@ -47,13 +47,13 @@ func runGenerateAuth(cmd *cobra.Command, args []string) error {
 
 	// Generate files.
 	files := map[string]string{
-		filepath.Join("internal", "modules", "auth", "module.go"):     authModuleTemplate,
-		filepath.Join("internal", "modules", "auth", "controller.go"): authControllerTemplate,
-		filepath.Join("internal", "modules", "auth", "service.go"):    authServiceTemplate,
-		filepath.Join("internal", "modules", "auth", "jwt.go"):        authJWTTemplate,
+		filepath.Join("internal", "modules", "auth", "module.go"):                 authModuleTemplate,
+		filepath.Join("internal", "modules", "auth", "controller.go"):             authControllerTemplate,
+		filepath.Join("internal", "modules", "auth", "service.go"):                authServiceTemplate,
+		filepath.Join("internal", "modules", "auth", "jwt.go"):                    authJWTTemplate,
 		filepath.Join("internal", "modules", "auth", "schemas", "auth.schema.go"): authSchemaTemplate,
-		filepath.Join("internal", "modules", "auth", "auth_test.go"):  authTestTemplate,
-		filepath.Join("internal", "common", "guards", "jwt_guard.go"): authGuardTemplate,
+		filepath.Join("internal", "modules", "auth", "auth_test.go"):              authTestTemplate,
+		filepath.Join("internal", "common", "guards", "jwt_guard.go"):             authGuardTemplate,
 	}
 
 	for path, content := range files {

@@ -35,9 +35,9 @@ type MigrationStatus struct {
 
 // SimpleMigration is a convenience implementation of the Migration interface.
 type SimpleMigration struct {
-	Ver  string
-	Desc string
-	UpFn func(db *sql.DB) error
+	Ver    string
+	Desc   string
+	UpFn   func(db *sql.DB) error
 	DownFn func(db *sql.DB) error
 }
 

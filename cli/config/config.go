@@ -34,7 +34,7 @@ func LoadGlobalConfig() (*GlobalConfig, error) {
 		if err := os.MkdirAll(configDir, 0755); err != nil {
 			return defaultConfig, nil // Degrading gracefully
 		}
-		
+
 		data, _ := json.MarshalIndent(defaultConfig, "", "  ")
 		_ = os.WriteFile(configPath, data, 0644)
 		return defaultConfig, nil

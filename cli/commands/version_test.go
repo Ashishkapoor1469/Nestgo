@@ -12,17 +12,17 @@ func TestVersionCommand(t *testing.T) {
 	// Capture output
 	var buf bytes.Buffer
 	cmd.SetOut(&buf)
-	
+
 	// Execute the command without args
 	cmd.SetArgs([]string{})
 	err := cmd.Execute()
-	
+
 	if err != nil {
 		t.Fatalf("VersionCmd execution failed: %v", err)
 	}
 
 	output := buf.String()
-	
+
 	if !strings.Contains(output, "NestGo CLI") {
 		t.Errorf("Expected output to contain 'NestGo CLI', got:\n%s", output)
 	}

@@ -16,7 +16,7 @@ func TestNewCommand_MissingArg(t *testing.T) {
 	cmd.SetArgs([]string{})
 
 	err := cmd.Execute()
-	
+
 	// Ensure we got an error and not a panic
 	if err == nil {
 		t.Fatal("Expected error when no arguments are provided, got nil")

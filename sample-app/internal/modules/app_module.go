@@ -8,7 +8,7 @@ import (
 	"github.com/Ashishkapoor1469/Nestgo/di"
 
 	_ "github.com/lib/pq"
-	
+
 	"github.com/sample-app/internal/modules/auth"
 	"github.com/sample-app/internal/modules/users"
 )

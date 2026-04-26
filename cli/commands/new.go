@@ -73,18 +73,18 @@ func runNew(cmd *cobra.Command, args []string) error {
 	}
 
 	files := map[string]string{
-		"go.mod":                                          goModTemplate,
-		"cmd/server/main.go":                             mainTemplate,
-		"internal/config/config.go":                      configTemplate,
-		"internal/modules/app_module.go":                 appModuleTemplate,
-		"internal/modules/health/health_controller.go":   healthControllerTemplate,
-		"internal/modules/health/health_module.go":       healthModuleTemplate,
-		".env":                                           envTemplate,
-		".env.example":                                   envExampleTemplate,
-		".gitignore":                                     gitignoreTemplate,
-		"nestgo.json":                                    nestgoJSONTemplate,
-		"Makefile":                                       makefileTemplate,
-		"README.md":                                      projectReadmeTemplate,
+		"go.mod":                                       goModTemplate,
+		"cmd/server/main.go":                           mainTemplate,
+		"internal/config/config.go":                    configTemplate,
+		"internal/modules/app_module.go":               appModuleTemplate,
+		"internal/modules/health/health_controller.go": healthControllerTemplate,
+		"internal/modules/health/health_module.go":     healthModuleTemplate,
+		".env":         envTemplate,
+		".env.example": envExampleTemplate,
+		".gitignore":   gitignoreTemplate,
+		"nestgo.json":  nestgoJSONTemplate,
+		"Makefile":     makefileTemplate,
+		"README.md":    projectReadmeTemplate,
 	}
 
 	fmt.Println()

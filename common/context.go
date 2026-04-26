@@ -184,7 +184,6 @@ func (c *Context) Logger() *slog.Logger {
 	return slog.Default().With("request_id", c.RequestID())
 }
 
-
 // --- Context Values ---
 
 // Set stores a value in the context.

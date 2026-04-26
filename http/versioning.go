@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/Ashishkapoor1469/Nestgo/common"
+	"github.com/go-chi/chi/v5"
 )
 
 // VersionedRouter provides API version-based routing.

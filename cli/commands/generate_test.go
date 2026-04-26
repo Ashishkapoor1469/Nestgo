@@ -17,7 +17,7 @@ func TestGenerateCommand_InvalidType(t *testing.T) {
 	cmd.SetArgs([]string{"invalid_type", "my_resource"})
 
 	err := cmd.Execute()
-	
+
 	if err == nil {
 		t.Fatal("Expected error for invalid generation type, got nil")
 	}
@@ -39,7 +39,7 @@ func TestGenerateCommand_MissingArgs(t *testing.T) {
 	cmd.SetArgs([]string{})
 
 	err := cmd.Execute()
-	
+
 	if err == nil {
 		t.Fatal("Expected error for missing arguments, got nil")
 	}

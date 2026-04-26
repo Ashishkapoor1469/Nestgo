@@ -61,7 +61,7 @@ func (s *AuthService) Register(name, email, password string) (*User, error) {
 	}
 
 	hash := hashPassword(password)
-	
+
 	var user User
 	var idInt int
 	err := s.db.DB().QueryRow(
@@ -74,7 +74,7 @@ func (s *AuthService) Register(name, email, password string) (*User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("email may already be registered: %v", err)
 	}
-	
+
 	user.ID = fmt.Sprintf("%d", idInt)
 	return &user, nil
 }

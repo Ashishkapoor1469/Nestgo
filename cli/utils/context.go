@@ -11,8 +11,8 @@ func IsNestGoProject() bool {
 	if _, err := os.Stat("go.mod"); os.IsNotExist(err) {
 		return false
 	}
-	
-	// Assuming `main.go` and `core` patterns signify a nested project. 
+
+	// Assuming `main.go` and `core` patterns signify a nested project.
 	// For stricter detection, we can look for nestgo.json, but given
 	// it's a Go framework, looking for go.mod is the first gate.
 	return true
