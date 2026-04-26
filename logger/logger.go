@@ -94,7 +94,7 @@ func (l *Logger) WithFields(fields map[string]any) *Logger {
 		args = append(args, k, v)
 	}
 	return &Logger{
-		Logger: l.Logger.With(args...),
+		Logger: l.With(args...),
 		level:  l.level,
 	}
 }
@@ -102,7 +102,7 @@ func (l *Logger) WithFields(fields map[string]any) *Logger {
 // WithComponent returns a logger scoped to a specific component.
 func (l *Logger) WithComponent(name string) *Logger {
 	return &Logger{
-		Logger: l.Logger.With("component", name),
+		Logger: l.With("component", name),
 		level:  l.level,
 	}
 }
@@ -110,7 +110,7 @@ func (l *Logger) WithComponent(name string) *Logger {
 // WithModule returns a logger scoped to a specific module.
 func (l *Logger) WithModule(name string) *Logger {
 	return &Logger{
-		Logger: l.Logger.With("module", name),
+		Logger: l.With("module", name),
 		level:  l.level,
 	}
 }

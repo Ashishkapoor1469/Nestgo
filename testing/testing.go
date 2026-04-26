@@ -162,13 +162,13 @@ type TestResponse struct {
 
 // JSON decodes the response body as JSON.
 func (r *TestResponse) JSON(v any) error {
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 	return json.NewDecoder(r.Body).Decode(v)
 }
 
 // BodyString returns the response body as a string.
 func (r *TestResponse) BodyString() string {
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 	data, _ := io.ReadAll(r.Body)
 	return string(data)
 }

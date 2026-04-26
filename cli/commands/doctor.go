@@ -351,24 +351,4 @@ func findModules() []moduleInfo {
 	return modules
 }
 
-// checkAntiPatterns checks for common anti-patterns.
-func checkAntiPatterns() []string {
-	var issues []string
 
-	_ = filepath.Walk("internal", func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() || filepath.Ext(path) != ".go" {
-			return nil
-		}
-		content, err := os.ReadFile(path)
-		if err != nil {
-			return nil
-		}
-		src := string(content)
-		if strings.Contains(src, "fmt.Println") {
-			issues = append(issues, fmt.Sprintf("%s: Use structured logger instead of fmt.Println", path))
-		}
-		return nil
-	})
-
-	return issues
-}

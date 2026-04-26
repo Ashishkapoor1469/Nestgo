@@ -3,7 +3,6 @@ package nesthttp
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/Ashishkapoor1469/Nestgo/common"
 	"github.com/go-chi/chi/v5"
@@ -201,15 +200,4 @@ func (g *VersionGroup) buildHandler(route common.Route, ctrl common.Controller) 
 	})
 }
 
-// normalizePrefix is reused from router.go — extracted as package-level.
-func normalizeVersionPrefix(global, local string) string {
-	path := global + "/" + strings.TrimPrefix(local, "/")
-	path = strings.TrimSuffix(path, "/")
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
-	}
-	for strings.Contains(path, "//") {
-		path = strings.ReplaceAll(path, "//", "/")
-	}
-	return path
-}
+

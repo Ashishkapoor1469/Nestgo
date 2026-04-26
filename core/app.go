@@ -188,9 +188,7 @@ func (app *NestGoApp) Start(addr ...string) error {
 	for _, mod := range order {
 		cfg := mod.Module()
 		for _, ctrl := range cfg.Controllers {
-			if httpCtrl, ok := ctrl.(common.Controller); ok {
-				app.router.RegisterController(httpCtrl)
-			}
+			app.router.RegisterController(ctrl)
 		}
 	}
 

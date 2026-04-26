@@ -197,7 +197,7 @@ func (gw *Gateway) Handler() http.HandlerFunc {
 func (gw *Gateway) readLoop(conn *Connection) {
 	defer func() {
 		gw.removeConnection(conn)
-		conn.Conn.Close()
+		_ = conn.Conn.Close()
 	}()
 
 	for {

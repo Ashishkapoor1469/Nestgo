@@ -47,7 +47,7 @@ func (c *Context) Bind(v any) error {
 	if c.Request.Body == nil {
 		return fmt.Errorf("request body is empty")
 	}
-	defer c.Request.Body.Close()
+	defer func() { _ = c.Request.Body.Close() }()
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(v); err != nil {

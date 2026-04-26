@@ -130,9 +130,10 @@ func generateComponent(componentType, name string) error {
 	pascal := toPascalCase(name)
 
 	dir := filepath.Join("internal", "modules", name)
-	if componentType == "middleware" {
+	switch componentType {
+	case "middleware":
 		dir = filepath.Join("internal", "common", "middleware")
-	} else if componentType == "guard" {
+	case "guard":
 		dir = filepath.Join("internal", "common", "guards")
 	}
 
@@ -461,7 +462,7 @@ func writeGenTemplate(path, tmplStr string, data any) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	return tmpl.Execute(f, data)
 }

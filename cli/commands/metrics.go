@@ -153,7 +153,7 @@ func (m *MetricsCollector) Handler() http.HandlerFunc {
 }`, m.totalRequests, m.activeRequests, m.totalErrors, errorRate, avgDuration.Milliseconds(), statusBreakdown)
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(json))
+		_, _ = w.Write([]byte(json))
 	}
 }
 

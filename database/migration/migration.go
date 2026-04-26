@@ -155,7 +155,7 @@ func (e *Engine) Applied(ctx context.Context) (map[string]time.Time, error) {
 	if err != nil {
 		return nil, fmt.Errorf("migration: failed to query applied migrations: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	applied := make(map[string]time.Time)
 	for rows.Next() {

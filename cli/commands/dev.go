@@ -85,7 +85,9 @@ func runDev(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  ✔ Port: %s\n", port)
 
 	// Inject PORT so the app uses our chosen port
-	os.Setenv("PORT", port)
+	if err := os.Setenv("PORT", port); err != nil {
+		return fmt.Errorf("failed to set PORT: %w", err)
+	}
 
 	fmt.Printf("  ✔ Watching for file changes...\n\n")
 
@@ -102,7 +104,7 @@ func runDev(cmd *cobra.Command, args []string) error {
 			fmt.Printf("  ❌ Watcher error: %v\n", err)
 			return
 		}
-		defer watcher.Close()
+		defer func() { _ = watcher.Close() }()
 
 		// Watch all directories recursively, excluding noise dirs
 		_ = filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
@@ -308,14 +310,14 @@ func isPortInUse(port string) bool {
 	if err != nil {
 		return true
 	}
-	ln.Close()
+	_ = ln.Close()
 	return false
 }
 
 // findFreePort tries incrementing the port until a free one is found.
 func findFreePort(startPort string) string {
 	base := 3000
-	fmt.Sscanf(startPort, "%d", &base)
+	_, _ = fmt.Sscanf(startPort, "%d", &base)
 	for i := 1; i <= 10; i++ {
 		p := fmt.Sprintf("%d", base+i)
 		if !isPortInUse(p) {
