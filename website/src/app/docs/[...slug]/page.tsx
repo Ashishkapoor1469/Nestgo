@@ -5,51 +5,41 @@ import rehypePrettyCode from "rehype-pretty-code";
 import { notFound } from "next/navigation";
 import { CodeBlock } from "@/components/CodeBlock";
 
-// Syntax highlighting configuration
-const highlightTheme = {
-  keyword: "text-purple-400",
-  string: "text-green-400",
-  function: "text-cyan-400",
-  number: "text-blue-400",
-  comment: "text-gray-500",
-  operator: "text-slate-300",
-};
-
-// Define components allowed in MDX natively
+// MDX component overrides — base styling comes from .docs-article CSS
 const components = {
-  h1: (props: any) => <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6 text-foreground" {...props} />,
-  h2: (props: any) => <h2 className="mt-10 border-b border-border pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0 mb-4 text-foreground" {...props} />,
-  h3: (props: any) => <h3 className="mt-8 text-2xl font-semibold tracking-tight mb-4 text-foreground" {...props} />,
-  p: (props: any) => <p className="leading-7 [&:not(:first-child)]:mt-6 text-muted-foreground" {...props} />,
-  ul: (props: any) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2 text-muted-foreground" {...props} />,
-  li: (props: any) => <li className="text-muted-foreground" {...props} />,
-  code: (props: any) => {
-    // Check if this is inline code (not inside pre)
-    return (
-      <code 
-        className="relative rounded px-2 py-1 font-mono text-sm font-semibold bg-slate-900 text-cyan-400 border border-slate-700" 
-        {...props} 
-      />
-    );
-  },
+  h1: (props: any) => <h1 {...props} />,
+  h2: (props: any) => <h2 {...props} />,
+  h3: (props: any) => <h3 {...props} />,
+  h4: (props: any) => <h4 {...props} />,
+  p: (props: any) => <p {...props} />,
+  ul: (props: any) => <ul {...props} />,
+  ol: (props: any) => <ol {...props} />,
+  li: (props: any) => <li {...props} />,
+  a: (props: any) => <a {...props} />,
+  strong: (props: any) => <strong {...props} />,
+  em: (props: any) => <em {...props} />,
+  hr: (props: any) => <hr {...props} />,
+  blockquote: (props: any) => <blockquote {...props} />,
+  code: (props: any) => (
+    <code
+      className="relative rounded px-2 py-1 font-mono text-sm font-semibold bg-slate-900 text-cyan-400 border border-slate-700"
+      {...props}
+    />
+  ),
   pre: (props: any) => (
     <CodeBlock>
       <pre className="p-6 overflow-x-auto text-slate-100 leading-relaxed" {...props} />
     </CodeBlock>
   ),
-  a: (props: any) => <a className="font-medium text-primary underline underline-offset-4 hover:text-primary/80" {...props} />,
   table: (props: any) => (
-    <div className="my-6 rounded-lg border border-border overflow-hidden">
+    <div className="table-wrapper my-6 rounded-xl border border-border overflow-hidden">
       <table className="w-full text-sm" {...props} />
     </div>
   ),
-  thead: (props: any) => <thead className="bg-secondary/50 border-b border-border" {...props} />,
-  tr: (props: any) => <tr className="border-b border-border last:border-b-0 hover:bg-secondary/30" {...props} />,
-  th: (props: any) => <th className="px-6 py-3 text-left font-semibold text-foreground" {...props} />,
-  td: (props: any) => <td className="px-6 py-3 text-muted-foreground" {...props} />,
-  blockquote: (props: any) => (
-    <blockquote className="mt-6 border-l-4 border-primary pl-6 italic text-muted-foreground" {...props} />
-  ),
+  thead: (props: any) => <thead {...props} />,
+  tr: (props: any) => <tr {...props} />,
+  th: (props: any) => <th {...props} />,
+  td: (props: any) => <td {...props} />,
 };
 
 interface Props {

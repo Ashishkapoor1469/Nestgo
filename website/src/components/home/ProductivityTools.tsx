@@ -74,7 +74,7 @@ export function ProductivityTools() {
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {tools.map((tool, idx) => {
             const Icon = tool.icon;
             return (
@@ -102,11 +102,11 @@ export function ProductivityTools() {
                 {/* Terminal Window */}
                 <div className="rounded-xl border border-white/10 bg-slate-900 overflow-hidden shadow-2xl">
                   <div className="flex items-center gap-2 px-4 py-3 bg-slate-800/50 border-b border-white/5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
                   </div>
-                  <div className="p-4 overflow-x-auto min-h-[180px]">
+                  <div className="p-3 sm:p-4 overflow-x-auto min-h-[180px]">
                     <pre className="text-xs font-mono text-slate-300 whitespace-pre">
                       {tool.terminal}
                     </pre>

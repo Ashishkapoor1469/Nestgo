@@ -82,7 +82,12 @@
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/30;
   }
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
 }
+
 
 /* Clean modern styling */
 .glass {
@@ -96,6 +101,7 @@
 pre {
   background-color: #1a202c !important;
   color: #e2e8f0 !important;
+  @apply rounded-lg border-0 overflow-hidden;
 }
 
 /* Keywords - Purple/Indigo */
@@ -155,10 +161,7 @@ pre code span[style*="color: rgb(230, 235"] {
   color: #e5e7eb !important;
 }
 
-/* Dark theme code block */
-pre {
-  @apply rounded-lg border-0 overflow-hidden;
-}
+/* Dark theme code block — merged above */
 
 pre code {
   @apply text-sm font-mono;
@@ -169,4 +172,122 @@ code:not(pre code) {
   @apply px-2 py-1 rounded font-mono text-sm font-semibold;
   background-color: #1e293b !important;
   color: #38bdf8 !important;
+}
+
+/* ─────────────────────────────────────────
+   Documentation Article Styles
+───────────────────────────────────────── */
+
+.docs-article {
+  @apply text-foreground;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+/* Headings */
+.docs-article h1 {
+  @apply text-4xl font-extrabold tracking-tight text-foreground mb-4 mt-0;
+  border-bottom: 2px solid theme(colors.border);
+  padding-bottom: 0.75rem;
+}
+
+.docs-article h2 {
+  @apply text-2xl font-bold text-foreground mt-12 mb-4;
+  border-bottom: 1px solid theme(colors.border);
+  padding-bottom: 0.5rem;
+}
+
+.docs-article h3 {
+  @apply text-xl font-semibold text-foreground mt-8 mb-3;
+}
+
+.docs-article h4 {
+  @apply text-lg font-semibold text-foreground mt-6 mb-2;
+}
+
+/* Paragraphs & text */
+.docs-article p {
+  @apply text-muted-foreground leading-relaxed mb-5;
+}
+
+/* Lists */
+.docs-article ul,
+.docs-article ol {
+  @apply text-muted-foreground mb-5 pl-6;
+}
+
+.docs-article ul {
+  @apply list-disc;
+}
+
+.docs-article ol {
+  @apply list-decimal;
+}
+
+.docs-article li {
+  @apply mb-2;
+}
+
+.docs-article li > p {
+  @apply mb-1;
+}
+
+/* Links */
+.docs-article a {
+  @apply text-primary font-medium underline underline-offset-4 hover:text-primary/80 transition-colors;
+}
+
+/* Blockquote — styled as info callout */
+.docs-article blockquote {
+  @apply mt-6 mb-6 pl-5 py-4 pr-4 rounded-r-lg text-muted-foreground italic;
+  border-left: 4px solid theme(colors.primary);
+  background-color: color-mix(in srgb, theme(colors.primary) 6%, transparent);
+}
+
+/* Tables */
+.docs-article .table-wrapper {
+  @apply my-6 rounded-xl border border-border overflow-hidden;
+}
+
+.docs-article table {
+  @apply w-full text-sm border-collapse;
+}
+
+.docs-article thead {
+  @apply bg-secondary border-b border-border;
+}
+
+.docs-article th {
+  @apply px-5 py-3 text-left font-semibold text-foreground;
+}
+
+.docs-article td {
+  @apply px-5 py-3 text-muted-foreground border-b border-border;
+}
+
+.docs-article tr:last-child td {
+  @apply border-b-0;
+}
+
+.docs-article tr:hover td {
+  background-color: color-mix(in srgb, theme(colors.secondary) 50%, transparent);
+}
+
+/* Strong / Em */
+.docs-article strong {
+  @apply font-bold text-foreground;
+}
+
+.docs-article em {
+  @apply italic;
+}
+
+/* HR */
+.docs-article hr {
+  @apply my-10 border-border;
+}
+
+/* Code blocks get their styles from CodeBlock component — just ensure spacing */
+.docs-article pre {
+  @apply my-6;
 }

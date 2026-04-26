@@ -117,36 +117,38 @@ export function Hero() {
           </button>
         </motion.div>
 
-        {/* Terminal Example - Enhanced */}
-        <motion.div 
-          initial={{ opacity: 0, y: 50, rotateX: -15 }}
-          animate={{ opacity: 1, y: 0, rotateX: 0 }}
+        {/* Terminal Example */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5, type: "spring", stiffness: 80 }}
-          style={{ perspective: "1200px" }}
-          className="mt-20 md:mt-24 w-full max-w-4xl"
+          className="mt-16 md:mt-24 w-full max-w-4xl"
         >
-          {/* 3D Shadow/Depth Effect */}
-          <div className="absolute inset-0 -z-10 rounded-2xl bg-gradient-to-b from-white/20 via-white/10 to-white/5 blur-3xl transform translate-y-12" />
-          
-          <div className="rounded-2xl border border-white/20 bg-slate-900/80 backdrop-blur-md shadow-2xl overflow-hidden transform transition-all duration-300 hover:shadow-2xl hover:border-white/30">
+          <div className="rounded-2xl border border-white/20 bg-slate-900/80 backdrop-blur-md shadow-2xl overflow-hidden">
             {/* Terminal Header */}
-            <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-800/60 via-slate-800/60 to-slate-900/60 backdrop-blur-sm border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-                <div className="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-slate-800/60 via-slate-800/60 to-slate-900/60 backdrop-blur-sm border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500/80" />
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-500/80" />
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500/80" />
               </div>
               <div className="text-xs font-mono text-white/50 uppercase tracking-widest flex items-center gap-2">
-                <Terminal className="w-4 h-4" /> $ nestgo generate resource
+                <Terminal className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">$ nestgo generate resource</span>
+                <span className="sm:hidden">nestgo CLI</span>
               </div>
               <div className="w-8" />
             </div>
-            
+
             {/* Terminal Content */}
-            <div className="bg-slate-900/70 backdrop-blur-sm p-8 font-mono text-sm text-left overflow-x-auto min-h-72">
+            <div className="bg-slate-900/70 backdrop-blur-sm p-4 sm:p-8 font-mono text-xs sm:text-sm text-left overflow-x-auto min-h-52 sm:min-h-72">
               <motion.div variants={container} initial="hidden" animate="show">
                 <motion.p variants={item}>
-                  <span className="text-slate-400">~/projects/app</span> <span className="text-purple-400 font-semibold">nestgo</span> <span className="text-green-400">generate</span> <span className="text-cyan-400">resource</span> <span className="text-yellow-300">users</span>
+                  <span className="text-slate-400">~/projects/app</span>{" "}
+                  <span className="text-purple-400 font-semibold">nestgo</span>{" "}
+                  <span className="text-green-400">generate</span>{" "}
+                  <span className="text-cyan-400">resource</span>{" "}
+                  <span className="text-yellow-300">users</span>
                 </motion.p>
                 <motion.p variants={item} className="text-emerald-400 mt-4 font-semibold">
                   ✓ Scaffolding resource: users
