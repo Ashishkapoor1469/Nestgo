@@ -350,5 +350,3 @@ func findModules() []moduleInfo {
 
 	return modules
 }
-
-

@@ -199,5 +199,3 @@ func (g *VersionGroup) buildHandler(route common.Route, ctrl common.Controller) 
 		}
 	})
 }
-
-
