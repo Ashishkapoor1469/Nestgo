@@ -178,7 +178,7 @@ func runDev(cmd *cobra.Command, args []string) error {
 		_ = process.Process.Signal(syscall.SIGTERM)
 		_ = process.Wait()
 	}
-	fmt.Println("  ✔ Goodbye!\n")
+	fmt.Println("  ✔ Goodbye!")
 	return nil
 }
 

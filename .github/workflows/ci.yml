@@ -1,4 +1,4 @@
-name: CI
+name: CI Pipeline
 
 on:
   push:
@@ -8,9 +8,12 @@ on:
 
 jobs:
   test:
-    name: Test & Build
-    runs-on: ubuntu-latest
-
+    name: Test & Validate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,42 +27,21 @@ jobs:
       - name: Verify dependencies
         run: go mod verify
 
-      - name: Run go vet
-        run: go vet ./...
-
       - name: Build CLI
         run: go build -v ./cmd/nestgo/...
 
       - name: Build all packages
         run: go build -v ./...
 
-      - name: Run tests
-        run: go test -v -race -cover ./...
+      - name: Run Unit Tests
+        run: go test -v -short -race -coverprofile=coverage.out ./...
+
+      - name: Run Integration Tests
+        run: go test -v -run Integration ./...
 
   lint:
-    name: Lint
+    name: Lint & Format
     runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          args: --timeout=5m
-
-  release-check:
-    name: Release Readiness
-    runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -77,6 +59,60 @@ jobs:
             gofmt -l . | grep -v vendor
             exit 1
           fi
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
+  e2e:
+    name: E2E Workflow Test
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build and Install CLI
+        run: go install ./cmd/nestgo
+
+      - name: Test Project Generation
+        run: |
+          nestgo new e2e-test-app
+          cd e2e-test-app
+          go build ./...
+        
+      - name: Test Resource Generation
+        run: |
+          cd e2e-test-app
+          nestgo generate resource product
+          go build ./...
+
+      - name: Run Doctor
+        run: |
+          cd e2e-test-app
+          nestgo doctor
+
+  release-check:
+    name: Release Readiness
+    runs-on: ubuntu-latest
+    needs: [e2e]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
 
       - name: Build release binary
         run: |

@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"runtime"
 
 	"github.com/spf13/cobra"
@@ -13,15 +12,15 @@ func VersionCmd(cliVersion string) *cobra.Command {
 		Use:   "version",
 		Short: "Show NestGo version information",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println()
-			fmt.Println("  NestGo CLI")
-			fmt.Println("  ─────────────────────────────────")
-			fmt.Printf("  CLI Version:       v%s\n", cliVersion)
-			fmt.Printf("  Framework Version: v0.4.0\n")
-			fmt.Printf("  Go Version:        %s\n", runtime.Version())
-			fmt.Printf("  OS/Arch:           %s/%s\n", runtime.GOOS, runtime.GOARCH)
-			fmt.Println("  ─────────────────────────────────")
-			fmt.Println()
+			cmd.Println()
+			cmd.Println("  NestGo CLI")
+			cmd.Println("  ─────────────────────────────────")
+			cmd.Printf("  CLI Version:       v%s\n", cliVersion)
+			cmd.Printf("  Framework Version: v0.4.1\n")
+			cmd.Printf("  Go Version:        %s\n", runtime.Version())
+			cmd.Printf("  OS/Arch:           %s/%s\n", runtime.GOOS, runtime.GOARCH)
+			cmd.Println("  ─────────────────────────────────")
+			cmd.Println()
 		},
 	}
 }
