@@ -17,7 +17,7 @@
     <img src="https://pkg.go.dev/badge/github.com/Ashishkapoor1469/Nestgo.svg" alt="Go Reference" />
   </a>
   &nbsp;
-  <img src="https://img.shields.io/badge/version-v0.4.0-blue" alt="Version" />
+  <img src="https://img.shields.io/badge/version-v0.5.0-blue" alt="Version" />
   &nbsp;
   <img src="https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white" alt="Go Version" />
   &nbsp;
@@ -67,8 +67,8 @@ Verify:
 
 ```bash
 nestgo version
-# CLI Version:       v0.4.0
-# Framework Version: v0.4.0
+# CLI Version:       v0.5.0
+# Framework Version: v0.5.0
 # Go Version:        go1.22.x
 ```
 
@@ -115,22 +115,14 @@ Output:
   ├── internal/modules/users/users_test.go    # Table-driven tests
   └── migrations/1714000000_create_users.sql  # SQL migration
 
+  🔗 Registered UsersModule in app_module.go
+
   Next steps:
-    1. Register in app_module.go
-    2. Run migrations: nestgo migration:run
-    3. Test: curl http://localhost:3000/api/users
+    1. Run migrations: nestgo migration:run
+    2. Test: curl http://localhost:3000/api/users
 ```
 
-Register the module in `internal/modules/app_module.go`:
-
-```go
-Imports: []common.Module{
-    &health.HealthModule{},
-    &users.UsersModule{},  // ← add this line
-},
-```
-
-Your CRUD endpoints are now live:
+Your CRUD endpoints are now automatically wired and live:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
