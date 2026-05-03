@@ -57,6 +57,24 @@ It gives you:
 
 ---
 
+## Performance
+
+Benchmarked on AMD Ryzen 5 5500U, Windows, Go 1.22
+(`go test -bench=. -benchmem ./benchmarks/...`)
+
+| Framework | ns/op | Memory | Allocs | Notes |
+|-----------|-------|--------|--------|-------|
+| Gin | 312 ns | 85 B | 1 | bare router only |
+| Chi | 600 ns | 418 B | 3 | bare router only |
+| **NestGo** | **1,998 ns** | **965 B** | **10** | full DI + module pipeline |
+
+> NestGo runs a complete enterprise pipeline (DI container,
+> module resolution, middleware) on every request.
+> For pure routing, NestGo uses Chi internally.
+> The overhead is the architecture — not the router.
+
+---
+
 ## Installation
 
 ```bash
