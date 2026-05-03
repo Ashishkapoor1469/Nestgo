@@ -188,7 +188,7 @@ func generateComponent(componentType, name string) error {
 	}
 
 	fmt.Printf("✅ Generated %s: %s\n", componentType, filePath)
-	
+
 	if componentType == "module" {
 		if err := registerModuleInAppModule(name, pascal); err != nil {
 			fmt.Printf("  ⚠️ Could not auto-register module: %v\n", err)
@@ -304,7 +304,7 @@ func generateResource(name string) error {
 
 	fmt.Printf("\n  ✅ Resource '%s' generated successfully!\n", name)
 	fmt.Println()
-	
+
 	if err := registerModuleInAppModule(name, pascal); err != nil {
 		fmt.Printf("  ⚠️ Could not auto-register module: %v\n", err)
 		fmt.Println("  Next steps:")
@@ -317,7 +317,7 @@ func generateResource(name string) error {
 		fmt.Printf("    1. Run migrations:            nestgo migration:run\n")
 		fmt.Printf("    2. Test your endpoints:       curl http://localhost:3000/api/%s\n", name)
 	}
-	
+
 	fmt.Println()
 	return nil
 }
