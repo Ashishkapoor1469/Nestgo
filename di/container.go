@@ -135,7 +135,7 @@ func (c *Container) ProvideValue(value any) error {
 // Resolve resolves a dependency by type.
 func (c *Container) Resolve(target any) error {
 	targetType := reflect.TypeOf(target)
-	if targetType.Kind() != reflect.Ptr {
+	if targetType.Kind() != reflect.Pointer {
 		return fmt.Errorf("di: resolve target must be a pointer, got %T", target)
 	}
 
@@ -208,7 +208,7 @@ func (c *Container) resolveType(t reflect.Type) (any, error) {
 					provider = p
 					break
 				}
-				if p.Type.Kind() == reflect.Ptr && p.Type.Implements(t) {
+				if p.Type.Kind() == reflect.Pointer && p.Type.Implements(t) {
 					provider = p
 					break
 				}
@@ -293,7 +293,7 @@ func (c *Container) Validate() error {
 				if dep.Kind() == reflect.Interface {
 					c.mu.RLock()
 					for _, candidate := range c.providers {
-						if candidate.Type.Implements(dep) || (candidate.Type.Kind() == reflect.Ptr && candidate.Type.Implements(dep)) {
+						if candidate.Type.Implements(dep) || (candidate.Type.Kind() == reflect.Pointer && candidate.Type.Implements(dep)) {
 							found = true
 							break
 						}
