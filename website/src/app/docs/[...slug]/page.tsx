@@ -46,6 +46,22 @@ interface Props {
   params: Promise<{ slug: string[] }>;
 }
 
+export async function generateStaticParams() {
+  const contentDir = path.join(process.cwd(), "src", "content", "docs");
+  let files: string[] = [];
+  try {
+    files = fs.readdirSync(contentDir);
+  } catch (error) {
+    console.error("Could not read docs directory", error);
+  }
+  
+  return files
+    .filter((file) => file.endsWith(".mdx"))
+    .map((file) => ({
+      slug: [file.replace(/\.mdx$/, "")],
+    }));
+}
+
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const contentDir = path.join(process.cwd(), "src", "content", "docs");
