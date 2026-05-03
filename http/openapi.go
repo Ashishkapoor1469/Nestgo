@@ -189,7 +189,7 @@ func (g *OpenAPIGenerator) Spec() OpenAPISpec {
 
 // reflectSchema creates a Schema from a Go type.
 func reflectSchema(t reflect.Type) Schema {
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 
@@ -226,7 +226,7 @@ func reflectSchema(t reflect.Type) Schema {
 }
 
 func typeToSchema(t reflect.Type) Schema {
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 

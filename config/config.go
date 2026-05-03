@@ -107,7 +107,7 @@ type Validatable interface {
 // bind maps environment variables to struct fields.
 func bind(target any) error {
 	v := reflect.ValueOf(target)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	t := v.Type()

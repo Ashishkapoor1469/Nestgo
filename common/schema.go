@@ -90,7 +90,7 @@ type rule struct {
 // Returns nil if all validations pass, or a *ValidationErrors with field-level errors.
 func ValidateStruct(v any) error {
 	val := reflect.ValueOf(v)
-	if val.Kind() == reflect.Ptr {
+	if val.Kind() == reflect.Pointer {
 		if val.IsNil() {
 			return fmt.Errorf("validate: nil pointer")
 		}
@@ -125,7 +125,7 @@ func ValidateStruct(v any) error {
 // HasValidateTags checks if a struct type has any validate tags.
 func HasValidateTags(v any) bool {
 	t := reflect.TypeOf(v)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
@@ -261,7 +261,7 @@ func validateRequired(val reflect.Value) string {
 		if val.IsNil() || val.Len() == 0 {
 			return "is required"
 		}
-	case reflect.Ptr, reflect.Interface:
+	case reflect.Pointer, reflect.Interface:
 		if val.IsNil() {
 			return "is required"
 		}
