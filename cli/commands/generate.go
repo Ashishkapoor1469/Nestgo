@@ -1,7 +1,9 @@
 package commands
 
 import (
+	"bytes"
 	"fmt"
+	"go/format"
 	"os"
 	"path/filepath"
 	"strings"
@@ -186,6 +188,15 @@ func generateComponent(componentType, name string) error {
 	}
 
 	fmt.Printf("✅ Generated %s: %s\n", componentType, filePath)
+	
+	if componentType == "module" {
+		if err := registerModuleInAppModule(name, pascal); err != nil {
+			fmt.Printf("  ⚠️ Could not auto-register module: %v\n", err)
+		} else {
+			fmt.Printf("  🔗 Registered %sModule in app_module.go\n", pascal)
+		}
+	}
+
 	return nil
 }
 
@@ -293,10 +304,20 @@ func generateResource(name string) error {
 
 	fmt.Printf("\n  ✅ Resource '%s' generated successfully!\n", name)
 	fmt.Println()
-	fmt.Println("  Next steps:")
-	fmt.Printf("    1. Register in app_module.go: Imports: []common.Module{&%s.%sModule{}}\n", name, pascal)
-	fmt.Printf("    2. Run migrations:            nestgo migration:run\n")
-	fmt.Printf("    3. Test your endpoints:       curl http://localhost:3000/api/%s\n", name)
+	
+	if err := registerModuleInAppModule(name, pascal); err != nil {
+		fmt.Printf("  ⚠️ Could not auto-register module: %v\n", err)
+		fmt.Println("  Next steps:")
+		fmt.Printf("    1. Register in app_module.go: Imports: []common.Module{&%s.%sModule{}}\n", name, pascal)
+		fmt.Printf("    2. Run migrations:            nestgo migration:run\n")
+		fmt.Printf("    3. Test your endpoints:       curl http://localhost:3000/api/%s\n", name)
+	} else {
+		fmt.Printf("  🔗 Registered %sModule in app_module.go\n", pascal)
+		fmt.Println("  Next steps:")
+		fmt.Printf("    1. Run migrations:            nestgo migration:run\n")
+		fmt.Printf("    2. Test your endpoints:       curl http://localhost:3000/api/%s\n", name)
+	}
+	
 	fmt.Println()
 	return nil
 }
@@ -487,6 +508,84 @@ func toPascalCase(s string) string {
 		return string(runes)
 	}
 	return result.String()
+}
+
+// registerModuleInAppModule automatically adds the generated module to internal/modules/app_module.go
+func registerModuleInAppModule(moduleName, pascalName string) error {
+	appModulePath := filepath.Join("internal", "modules", "app_module.go")
+	if _, err := os.Stat(appModulePath); os.IsNotExist(err) {
+		return fmt.Errorf("app_module.go not found")
+	}
+
+	data, err := os.ReadFile(appModulePath)
+	if err != nil {
+		return err
+	}
+
+	modData, err := os.ReadFile("go.mod")
+	if err != nil {
+		return fmt.Errorf("could not read go.mod: %v", err)
+	}
+
+	// Extract module name from go.mod
+	var projectMod string
+	for _, line := range strings.Split(string(modData), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			projectMod = strings.TrimSpace(strings.TrimPrefix(line, "module "))
+			break
+		}
+	}
+
+	if projectMod == "" {
+		return fmt.Errorf("module name not found in go.mod")
+	}
+
+	content := string(data)
+	importPath := fmt.Sprintf("\"%s/internal/modules/%s\"", projectMod, moduleName)
+
+	// Update imports if not present
+	if !strings.Contains(content, importPath) {
+		importStart := strings.Index(content, "import (")
+		if importStart != -1 {
+			blockEnd := strings.Index(content[importStart:], "\n)")
+			if blockEnd != -1 {
+				insertPos := importStart + blockEnd
+				content = content[:insertPos] + "\n\t" + importPath + content[insertPos:]
+			}
+		} else {
+			// If no import block, just add it below package declaration
+			pkgEnd := strings.Index(content, "\n")
+			if pkgEnd != -1 {
+				content = content[:pkgEnd] + "\n\nimport (\n\t" + importPath + "\n)\n" + content[pkgEnd:]
+			}
+		}
+	}
+
+	// Update Imports slice if not present
+	moduleDecl := fmt.Sprintf("&%s.%sModule{},", moduleName, pascalName)
+	if !strings.Contains(content, moduleDecl) {
+		importsLine := "Imports: []common.Module{"
+		importsPos := strings.Index(content, importsLine)
+		if importsPos != -1 {
+			insertPos := importsPos + len(importsLine)
+			content = content[:insertPos] + "\n\t\t\t" + moduleDecl + content[insertPos:]
+		}
+	}
+
+	// Format code
+	formatted, err := format.Source([]byte(content))
+	if err != nil {
+		// Fallback to unformatted if go/format fails (shouldn't happen on valid ast)
+		formatted = []byte(content)
+	}
+
+	// Make sure we replace the file only if something actually changed to be safe.
+	if bytes.Equal(data, formatted) {
+		return nil
+	}
+
+	return os.WriteFile(appModulePath, formatted, 0644)
 }
 
 // --- Component Templates ---

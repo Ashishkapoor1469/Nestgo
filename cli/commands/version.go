@@ -16,7 +16,7 @@ func VersionCmd(cliVersion string) *cobra.Command {
 			cmd.Println("  NestGo CLI")
 			cmd.Println("  ─────────────────────────────────")
 			cmd.Printf("  CLI Version:       v%s\n", cliVersion)
-			cmd.Printf("  Framework Version: v0.4.1\n")
+			cmd.Printf("  Framework Version: v0.5.0\n")
 			cmd.Printf("  Go Version:        %s\n", runtime.Version())
 			cmd.Printf("  OS/Arch:           %s/%s\n", runtime.GOOS, runtime.GOARCH)
 			cmd.Println("  ─────────────────────────────────")

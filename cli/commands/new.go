@@ -162,7 +162,7 @@ var goModTemplate = `module {{.ModuleName}}
 go 1.22
 
 require (
-	github.com/Ashishkapoor1469/Nestgo v0.4.0
+	github.com/Ashishkapoor1469/Nestgo v0.5.0
 )
 `
 
@@ -416,7 +416,7 @@ var projectReadmeTemplate = `# {{.Name}}
 A production-ready API built with [NestGo](https://github.com/Ashishkapoor1469/Nestgo).
 
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://golang.org)
-[![NestGo](https://img.shields.io/badge/NestGo-v0.4.0-E34F26)](https://github.com/Ashishkapoor1469/Nestgo)
+[![NestGo](https://img.shields.io/badge/NestGo-v0.5.0-E34F26)](https://github.com/Ashishkapoor1469/Nestgo)
 
 ---
 
