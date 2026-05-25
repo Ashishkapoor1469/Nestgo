@@ -59,21 +59,35 @@ It gives you:
 
 ## Performance
 
-### Before Optimization
-
-Benchmarked on AMD Ryzen 5 5500U, Windows, Go 1.22  
+Benchmarked on AMD Ryzen 5 5500U, Windows, Go 1.22
 (`go test -bench=. -benchmem ./benchmarks/...`)
 
 ### Before Optimization (v0.5.0)
 
 | Framework | ns/op | Memory | Allocs | Notes |
-|-----------|-------|--------|--------|-------|
+|-----------|------:|-------:|-------:|-------|
 | Gin | 312 ns | 85 B | 1 | bare router only |
 | Chi | 600 ns | 418 B | 3 | bare router only |
 | **NestGo** | **1,998 ns** | **965 B** | **10** | full DI + module pipeline |
 
-> NestGo runs a complete enterprise pipeline (DI container,
-> module resolution, middleware) on every request.
+### After Optimization (v0.6.0)
+
+| Framework | ns/op | Memory | Allocs | Notes |
+|-----------|------:|-------:|-------:|-------|
+| Gin | 151.4 ns | 83 B | 1 | bare router only |
+| Chi | 250.0 ns | 396 B | 2 | bare router only |
+| Fiber | 11,757 ns | 5,899 B | 25 | full HTTP stack |
+| **NestGo** | **718.7 ns** | **754 B** | **5** | optimized DI + module pipeline |
+
+### NestGo Improvements
+
+| Metric | Before | After | Improvement |
+|--------|-------:|------:|------------:|
+| Speed | 1,998 ns/op | 718.7 ns/op | **~64% faster** |
+| Memory | 965 B/op | 754 B/op | **~22% lower** |
+| Allocations | 10 allocs/op | 5 allocs/op | **50% fewer** |
+
+> NestGo runs a complete enterprise pipeline (DI container, module resolution, middleware) on every request.
 > For pure routing, NestGo uses Chi internally.
 > The overhead is the architecture — not the router.
 
