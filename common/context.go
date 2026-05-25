@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -23,6 +24,43 @@ type Context struct {
 	values  map[string]any
 	status  int
 	written bool
+}
+
+var contextPool = sync.Pool{
+	New: func() any {
+		return &Context{}
+	},
+}
+
+// AcquireContext retrieves a context from the pool and resets it.
+func AcquireContext(w http.ResponseWriter, r *http.Request) *Context {
+	ctx := contextPool.Get().(*Context)
+	ctx.Reset(w, r)
+	return ctx
+}
+
+// ReleaseContext clears the context and returns it to the pool.
+func ReleaseContext(ctx *Context) {
+	ctx.Writer = nil
+	ctx.Request = nil
+	if ctx.params != nil {
+		clear(ctx.params)
+	}
+	ctx.query = nil
+	if ctx.values != nil {
+		clear(ctx.values)
+	}
+	ctx.written = false
+	ctx.status = http.StatusOK
+	contextPool.Put(ctx)
+}
+
+// Reset resets the context fields for reuse.
+func (c *Context) Reset(w http.ResponseWriter, r *http.Request) {
+	c.Writer = w
+	c.Request = r
+	c.written = false
+	c.status = http.StatusOK
 }
 
 // NewContext creates a new HTTP context.
@@ -101,6 +139,9 @@ func (c *Context) Param(key string) string {
 	if v := chi.URLParam(c.Request, key); v != "" {
 		return v
 	}
+	if c.params == nil {
+		return ""
+	}
 	return c.params[key]
 }
 
@@ -111,6 +152,9 @@ func (c *Context) ParamInt(key string) (int, error) {
 
 // Query returns a query string parameter.
 func (c *Context) Query(key string) string {
+	if c.query == nil && c.Request != nil {
+		c.query = c.Request.URL.Query()
+	}
 	vals := c.query[key]
 	if len(vals) > 0 {
 		return vals[0]
@@ -188,11 +232,17 @@ func (c *Context) Logger() *slog.Logger {
 
 // Set stores a value in the context.
 func (c *Context) Set(key string, value any) {
+	if c.values == nil {
+		c.values = make(map[string]any, 4)
+	}
 	c.values[key] = value
 }
 
 // Get retrieves a value from the context.
 func (c *Context) Get(key string) (any, bool) {
+	if c.values == nil {
+		return nil, false
+	}
 	v, ok := c.values[key]
 	return v, ok
 }

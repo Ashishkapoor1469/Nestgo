@@ -17,6 +17,10 @@ type AppConfig struct {
 	ShutdownTimeout int // seconds
 	EnableMetrics   bool
 	EnableTracing   bool
+	EnableDocs      bool
+	AppName         string
+	AppVersion      string
+	GRPCAddress     string
 }
 
 // DefaultAppConfig returns sensible defaults.
@@ -29,6 +33,10 @@ func DefaultAppConfig() *AppConfig {
 		ShutdownTimeout: 30,
 		EnableMetrics:   false,
 		EnableTracing:   false,
+		EnableDocs:      false,
+		AppName:         "NestGo Application",
+		AppVersion:      "1.0.0",
+		GRPCAddress:     "",
 	}
 }
 
@@ -79,5 +87,33 @@ func WithMetrics() Option {
 func WithTracing() Option {
 	return func(c *AppConfig) {
 		c.EnableTracing = true
+	}
+}
+
+// WithDocs enables Swagger UI documentation automatically.
+func WithDocs(enabled bool) Option {
+	return func(c *AppConfig) {
+		c.EnableDocs = enabled
+	}
+}
+
+// WithAppName sets the application name for OpenAPI documentation.
+func WithAppName(name string) Option {
+	return func(c *AppConfig) {
+		c.AppName = name
+	}
+}
+
+// WithAppVersion sets the application version for OpenAPI documentation.
+func WithAppVersion(version string) Option {
+	return func(c *AppConfig) {
+		c.AppVersion = version
+	}
+}
+
+// WithGRPC sets the gRPC listen address.
+func WithGRPC(addr string) Option {
+	return func(c *AppConfig) {
+		c.GRPCAddress = addr
 	}
 }

@@ -17,7 +17,7 @@
     <img src="https://pkg.go.dev/badge/github.com/Ashishkapoor1469/Nestgo.svg" alt="Go Reference" />
   </a>
   &nbsp;
-  <img src="https://img.shields.io/badge/version-v0.5.0-blue" alt="Version" />
+  <img src="https://img.shields.io/badge/version-v0.6.0-blue" alt="Version" />
   &nbsp;
   <img src="https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white" alt="Go Version" />
   &nbsp;
@@ -106,8 +106,8 @@ Verify:
 
 ```bash
 nestgo version
-# CLI Version:       v0.5.0
-# Framework Version: v0.5.0
+# CLI Version:       v0.6.0
+# Framework Version: v0.6.0
 # Go Version:        go1.22.x
 ```
 
@@ -366,11 +366,11 @@ go run ./cmd
 - [x] Auth scaffolding (JWT + bcrypt)
 - [x] Architecture linter
 - [x] `nestgo doctor` health checks
-- [ ] WebSocket support
-- [ ] OpenAPI / Swagger auto-generation
-- [ ] Rate limiting middleware
-- [ ] Caching integration (Redis)
-- [ ] gRPC transport layer
+- [x] WebSocket support
+- [x] OpenAPI / Swagger auto-generation
+- [x] Rate limiting middleware
+- [x] Caching integration (Redis)
+- [x] gRPC transport layer
 
 ---
 

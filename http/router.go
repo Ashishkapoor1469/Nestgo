@@ -126,11 +126,27 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // buildHandler wraps a route handler with guards, interceptors, and error handling.
 func (r *Router) buildHandler(route common.Route, ctrl common.Controller) http.Handler {
+	// Pre-compute merged guards slice
+	allGuards := make([]common.Guard, 0, len(r.globalGuards)+len(route.Guards))
+	allGuards = append(allGuards, r.globalGuards...)
+	allGuards = append(allGuards, route.Guards...)
+
+	// Pre-compute interceptor chain
+	finalHandler := route.Handler
+	for i := len(r.globalInterceptors) - 1; i >= 0; i-- {
+		interceptor := r.globalInterceptors[i]
+		next := finalHandler
+		finalHandler = func(ctx *common.Context) error {
+			return interceptor.Intercept(ctx, next)
+		}
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		ctx := common.NewContext(w, req)
+		ctx := common.AcquireContext(w, req)
+		defer common.ReleaseContext(ctx)
 
-		// Run global guards.
-		for _, guard := range r.globalGuards {
+		// Run guards
+		for _, guard := range allGuards {
 			allowed, err := guard.CanActivate(ctx)
 			if err != nil {
 				r.errorHandler(ctx, err)
@@ -142,32 +158,7 @@ func (r *Router) buildHandler(route common.Route, ctrl common.Controller) http.H
 			}
 		}
 
-		// Run route-level guards.
-		for _, guard := range route.Guards {
-			allowed, err := guard.CanActivate(ctx)
-			if err != nil {
-				r.errorHandler(ctx, err)
-				return
-			}
-			if !allowed {
-				_ = ctx.Error(http.StatusForbidden, "access denied")
-				return
-			}
-		}
-
-		// Build interceptor chain.
-		finalHandler := route.Handler
-
-		// Wrap with global interceptors (reverse order for proper nesting).
-		for i := len(r.globalInterceptors) - 1; i >= 0; i-- {
-			interceptor := r.globalInterceptors[i]
-			next := finalHandler
-			finalHandler = func(ctx *common.Context) error {
-				return interceptor.Intercept(ctx, next)
-			}
-		}
-
-		// Execute handler.
+		// Execute handler chain
 		if err := finalHandler(ctx); err != nil {
 			r.errorHandler(ctx, err)
 		}

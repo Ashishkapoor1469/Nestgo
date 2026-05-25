@@ -159,11 +159,15 @@ func (g *VersionGroup) Use(middlewares ...func(http.Handler) http.Handler) {
 
 // buildHandler wraps a route handler with guards and error handling.
 func (g *VersionGroup) buildHandler(route common.Route, ctrl common.Controller) http.Handler {
+	// Precompute route-level guards.
+	allGuards := append([]common.Guard(nil), route.Guards...)
+
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		ctx := common.NewContext(w, req)
+		ctx := common.AcquireContext(w, req)
+		defer common.ReleaseContext(ctx)
 
 		// Run route-level guards.
-		for _, guard := range route.Guards {
+		for _, guard := range allGuards {
 			allowed, err := guard.CanActivate(ctx)
 			if err != nil {
 				if httpErr, ok := err.(*common.HttpException); ok {

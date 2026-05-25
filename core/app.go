@@ -12,8 +12,10 @@ import (
 
 	"github.com/Ashishkapoor1469/Nestgo/common"
 	"github.com/Ashishkapoor1469/Nestgo/di"
+	nestgrpc "github.com/Ashishkapoor1469/Nestgo/grpc"
 	nesthttp "github.com/Ashishkapoor1469/Nestgo/http"
 	"github.com/Ashishkapoor1469/Nestgo/middleware"
+	"github.com/go-chi/chi/v5"
 )
 
 // NestGoApp is the central application container.
@@ -192,6 +194,42 @@ func (app *NestGoApp) Start(addr ...string) error {
 		}
 	}
 
+	// Phase 5.5: Auto-wire OpenAPI/Swagger documentation
+	if app.config.EnableDocs {
+		app.logger.Info("mounting Swagger UI at /docs")
+		gen := nesthttp.NewOpenAPIGenerator(app.config.AppName, app.config.AppVersion)
+		gen.AddServer("http://localhost"+listenAddr, "Development")
+		gen.FromRoutes(app.router.Routes())
+
+		if mux, ok := app.router.Handler().(*chi.Mux); ok {
+			mux.Get("/docs/spec.json", func(w http.ResponseWriter, r *http.Request) {
+				spec, _ := gen.JSON()
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write(spec)
+			})
+			mux.Get("/docs", nesthttp.SwaggerUIHandler("/docs/spec.json"))
+		}
+	}
+
+	// Phase 5.6: Register gRPC Service Registrars (if enabled)
+	var grpcServer *nestgrpc.GRPCServer
+	if app.config.GRPCAddress != "" {
+		var gServer *nestgrpc.GRPCServer
+		if err := app.container.Resolve(&gServer); err == nil {
+			grpcServer = gServer
+		} else {
+			grpcServer = nestgrpc.NewGRPCServer(app.logger)
+			_ = app.container.ProvideValue(grpcServer)
+		}
+
+		// Register all resolved instances that implement ServiceRegistrar
+		for _, inst := range instances {
+			if reg, ok := inst.(nestgrpc.ServiceRegistrar); ok {
+				grpcServer.Register(reg)
+			}
+		}
+	}
+
 	// Phase 6: Run init hooks.
 	if err := app.lifecycle.RunInitHooks(); err != nil {
 		return fmt.Errorf("init hooks failed: %w", err)
@@ -212,6 +250,15 @@ func (app *NestGoApp) Start(addr ...string) error {
 	// Run start hooks.
 	if err := app.lifecycle.RunStartHooks(); err != nil {
 		return fmt.Errorf("start hooks failed: %w", err)
+	}
+
+	// Start gRPC server (if enabled)
+	if app.config.GRPCAddress != "" && grpcServer != nil {
+		go func() {
+			if err := grpcServer.Start(app.config.GRPCAddress); err != nil {
+				app.logger.Error("gRPC server error", "error", err)
+			}
+		}()
 	}
 
 	// Graceful shutdown listener.
@@ -237,6 +284,14 @@ func (app *NestGoApp) Shutdown(ctx context.Context) error {
 	// Run shutdown hooks.
 	if err := app.lifecycle.RunShutdownHooks(); err != nil {
 		app.logger.Error("shutdown hook error", "error", err)
+	}
+
+	// Shutdown gRPC server if running.
+	if app.config.GRPCAddress != "" {
+		var grpcServer *nestgrpc.GRPCServer
+		if err := app.container.Resolve(&grpcServer); err == nil && grpcServer != nil {
+			grpcServer.Stop()
+		}
 	}
 
 	// Shutdown HTTP server.

@@ -41,6 +41,7 @@ func GenerateCmd() *cobra.Command {
 		generateSchemaCmd(),
 		generateDTOCmd(),
 		generateTestCmd(),
+		generateGatewayCmd(),
 		AuthCmd(),
 	)
 
@@ -178,6 +179,9 @@ func generateComponent(componentType, name string) error {
 	case "interceptor":
 		tmplStr = interceptorGenTemplate
 		fileName = name + "_interceptor.go"
+	case "gateway":
+		tmplStr = gatewayTemplate
+		fileName = name + "_gateway.go"
 	default:
 		return fmt.Errorf("unknown component type: %s", componentType)
 	}
@@ -211,9 +215,10 @@ func runInteractiveGenerate() error {
 	fmt.Println("    6. schema       (Validation schema)")
 	fmt.Println("    7. dto          (Data Transfer Object)")
 	fmt.Println("    8. test         (Test scaffolding)")
+	fmt.Println("    9. gateway      (WebSocket Gateway)")
 	fmt.Println()
 
-	fmt.Print(utils.StyleAccent.Render("  > Choose an option (1-8): "))
+	fmt.Print(utils.StyleAccent.Render("  > Choose an option (1-9): "))
 
 	var option int
 	_, err := fmt.Scanf("%d", &option)
@@ -247,6 +252,8 @@ func runInteractiveGenerate() error {
 		return generateDTO(name)
 	case 8:
 		return generateTest(name)
+	case 9:
+		return generateComponent("gateway", name)
 	default:
 		return fmt.Errorf("invalid option selected")
 	}
@@ -464,6 +471,21 @@ Example:
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return generateTest(args[0])
+		},
+	}
+}
+
+func generateGatewayCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "gateway [name]",
+		Short: "Generate a WebSocket gateway",
+		Long: `Generate a WebSocket gateway module inside a module folder.
+
+Example:
+  nestgo generate gateway chat`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return generateComponent("gateway", args[0])
 		},
 	}
 }
@@ -1221,4 +1243,50 @@ CREATE INDEX IF NOT EXISTS idx_{{.Name}}_created_at ON {{.Name}} (created_at DES
 
 -- Rollback:
 -- DROP TABLE IF EXISTS {{.Name}};
+`
+
+var gatewayTemplate = `package {{.Package}}
+
+import (
+	"encoding/json"
+	"log/slog"
+
+	"github.com/Ashishkapoor1469/Nestgo/ws"
+)
+
+// {{.PascalName}}Gateway handles WebSocket events for {{.Name}}.
+type {{.PascalName}}Gateway struct {
+	gw     *ws.Gateway
+	logger *slog.Logger
+}
+
+// New{{.PascalName}}Gateway creates a new {{.Name}} gateway.
+func New{{.PascalName}}Gateway(gw *ws.Gateway, logger *slog.Logger) *{{.PascalName}}Gateway {
+	g := &{{.PascalName}}Gateway{
+		gw:     gw,
+		logger: logger,
+	}
+	g.registerHandlers()
+	return g
+}
+
+func (g *{{.PascalName}}Gateway) registerHandlers() {
+	g.gw.On("message", g.handleMessage)
+}
+
+func (g *{{.PascalName}}Gateway) handleMessage(conn *ws.Connection, data json.RawMessage) error {
+	var payload struct {
+		Text string ` + "`" + `json:"text"` + "`" + `
+	}
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return err
+	}
+	g.logger.Info("Received message", "from", conn.ID, "text", payload.Text)
+	
+	// Echo back
+	return conn.Send(ws.Message{
+		Event: "message",
+		Data:  data,
+	})
+}
 `

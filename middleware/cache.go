@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"net/http"
@@ -10,30 +11,133 @@ import (
 
 // CacheEntry holds a cached response.
 type CacheEntry struct {
-	Body       []byte
-	Status     int
-	Headers    http.Header
-	Expiration time.Time
+	Body       []byte      `json:"body"`
+	Status     int         `json:"status"`
+	Headers    http.Header `json:"headers"`
+	Expiration time.Time   `json:"expiration"`
 }
 
-// Cache is an in-memory HTTP response cache.
-type Cache struct {
+// CacheStore defines the interface for HTTP response cache backends.
+type CacheStore interface {
+	Get(ctx context.Context, key string) (*CacheEntry, bool)
+	Set(ctx context.Context, key string, entry *CacheEntry, ttl time.Duration, tags ...string)
+	Delete(ctx context.Context, key string)
+	InvalidateTags(ctx context.Context, tags ...string)
+	Clear(ctx context.Context)
+}
+
+// MemoryCacheStore is an in-memory implementation of CacheStore.
+type MemoryCacheStore struct {
 	mu      sync.RWMutex
 	entries map[string]*CacheEntry
-	ttl     time.Duration
+	tagMap  map[string]map[string]bool // tag -> set of keys
 }
 
-// NewCache creates a new cache with the given TTL.
-func NewCache(ttl time.Duration) *Cache {
-	c := &Cache{
+// NewMemoryCacheStore creates a new MemoryCacheStore.
+func NewMemoryCacheStore() *MemoryCacheStore {
+	store := &MemoryCacheStore{
 		entries: make(map[string]*CacheEntry),
-		ttl:     ttl,
+		tagMap:  make(map[string]map[string]bool),
 	}
-	go c.cleanupLoop()
+	go store.cleanupLoop()
+	return store
+}
+
+func (s *MemoryCacheStore) Get(ctx context.Context, key string) (*CacheEntry, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	entry, exists := s.entries[key]
+	if !exists {
+		return nil, false
+	}
+	if time.Now().After(entry.Expiration) {
+		return nil, false
+	}
+	return entry, true
+}
+
+func (s *MemoryCacheStore) Set(ctx context.Context, key string, entry *CacheEntry, ttl time.Duration, tags ...string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.entries[key] = entry
+
+	for _, tag := range tags {
+		if _, exists := s.tagMap[tag]; !exists {
+			s.tagMap[tag] = make(map[string]bool)
+		}
+		s.tagMap[tag][key] = true
+	}
+}
+
+func (s *MemoryCacheStore) Delete(ctx context.Context, key string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.entries, key)
+}
+
+func (s *MemoryCacheStore) InvalidateTags(ctx context.Context, tags ...string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, tag := range tags {
+		if keys, exists := s.tagMap[tag]; exists {
+			for key := range keys {
+				delete(s.entries, key)
+			}
+			delete(s.tagMap, tag)
+		}
+	}
+}
+
+func (s *MemoryCacheStore) Clear(ctx context.Context) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.entries = make(map[string]*CacheEntry)
+	s.tagMap = make(map[string]map[string]bool)
+}
+
+func (s *MemoryCacheStore) cleanupLoop() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		now := time.Now()
+		s.mu.Lock()
+		for key, entry := range s.entries {
+			if now.After(entry.Expiration) {
+				delete(s.entries, key)
+			}
+		}
+		s.mu.Unlock()
+	}
+}
+
+// Cache is a middleware handler that wraps an HTTP request with caching.
+type Cache struct {
+	store CacheStore
+	ttl   time.Duration
+	tags  []string
+}
+
+// NewCache creates a new cache middleware with default MemoryCacheStore.
+func NewCache(ttl time.Duration) *Cache {
+	return &Cache{
+		store: NewMemoryCacheStore(),
+		ttl:   ttl,
+	}
+}
+
+// WithStore configures a custom CacheStore.
+func (c *Cache) WithStore(store CacheStore) *Cache {
+	c.store = store
 	return c
 }
 
-// Middleware returns a caching middleware for GET requests.
+// WithTags adds static invalidation tags to the cached responses.
+func (c *Cache) WithTags(tags ...string) *Cache {
+	c.tags = tags
+	return c
+}
+
+// Middleware returns the caching middleware.
 func (c *Cache) Middleware() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -46,9 +150,7 @@ func (c *Cache) Middleware() func(next http.Handler) http.Handler {
 			key := c.cacheKey(r)
 
 			// Check cache.
-			c.mu.RLock()
-			entry, exists := c.entries[key]
-			c.mu.RUnlock()
+			entry, exists := c.store.Get(r.Context(), key)
 
 			if exists && time.Now().Before(entry.Expiration) {
 				// Serve from cache.
@@ -65,21 +167,24 @@ func (c *Cache) Middleware() func(next http.Handler) http.Handler {
 			rec := &cacheRecorder{
 				ResponseWriter: w,
 				status:         http.StatusOK,
-				headers:        make(http.Header),
 			}
 
 			next.ServeHTTP(rec, r)
 
 			// Only cache successful responses.
 			if rec.status >= 200 && rec.status < 300 {
-				c.mu.Lock()
-				c.entries[key] = &CacheEntry{
+				headers := make(http.Header)
+				for k, v := range w.Header() {
+					headers[k] = v
+				}
+
+				entry = &CacheEntry{
 					Body:       rec.body,
 					Status:     rec.status,
-					Headers:    rec.headers,
+					Headers:    headers,
 					Expiration: time.Now().Add(c.ttl),
 				}
-				c.mu.Unlock()
+				c.store.Set(r.Context(), key, entry, c.ttl, c.tags...)
 			}
 
 			w.Header().Set("X-Cache", "MISS")
@@ -87,20 +192,21 @@ func (c *Cache) Middleware() func(next http.Handler) http.Handler {
 	}
 }
 
-// Invalidate removes a cached entry.
-func (c *Cache) Invalidate(path string) {
+// Invalidate invalidates a cache key based on the URL path.
+func (c *Cache) Invalidate(ctx context.Context, path string) {
 	hash := sha256.Sum256([]byte(path))
 	key := hex.EncodeToString(hash[:])
-	c.mu.Lock()
-	delete(c.entries, key)
-	c.mu.Unlock()
+	c.store.Delete(ctx, key)
 }
 
-// Clear removes all cached entries.
-func (c *Cache) Clear() {
-	c.mu.Lock()
-	c.entries = make(map[string]*CacheEntry)
-	c.mu.Unlock()
+// InvalidateTags invalidates all cache entries matching any of the given tags.
+func (c *Cache) InvalidateTags(ctx context.Context, tags ...string) {
+	c.store.InvalidateTags(ctx, tags...)
+}
+
+// Clear clears all cache entries.
+func (c *Cache) Clear(ctx context.Context) {
+	c.store.Clear(ctx)
 }
 
 func (c *Cache) cacheKey(r *http.Request) string {
@@ -108,27 +214,11 @@ func (c *Cache) cacheKey(r *http.Request) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (c *Cache) cleanupLoop() {
-	ticker := time.NewTicker(c.ttl)
-	defer ticker.Stop()
-	for range ticker.C {
-		now := time.Now()
-		c.mu.Lock()
-		for key, entry := range c.entries {
-			if now.After(entry.Expiration) {
-				delete(c.entries, key)
-			}
-		}
-		c.mu.Unlock()
-	}
-}
-
 // cacheRecorder captures the response for caching.
 type cacheRecorder struct {
 	http.ResponseWriter
-	status  int
-	body    []byte
-	headers http.Header
+	status int
+	body   []byte
 }
 
 func (r *cacheRecorder) WriteHeader(status int) {
