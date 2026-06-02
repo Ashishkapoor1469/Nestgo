@@ -6,6 +6,11 @@ const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
 });
+export const metadata: Metadata = {
+  verification: {
+    google: "yehPcw5ESWZp48ves1OHjvjHzUY_Vb_QlPVxKPcoWNg",
+  },
+};
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
