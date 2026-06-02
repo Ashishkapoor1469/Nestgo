@@ -6,11 +6,6 @@ const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
 });
-export const metadata: Metadata = {
-  verification: {
-    google: "yehPcw5ESWZp48ves1OHjvjHzUY_Vb_QlPVxKPcoWNg",
-  },
-};
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
@@ -19,7 +14,40 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "NestGo — Enterprise Backend Architecture for Go",
-  description: "A production-grade, modular, and high-performance backend framework for Go inspired by NestJS.",
+  description:
+    "A production-grade, modular, and high-performance backend framework for Go inspired by NestJS.",
+
+  verification: {
+    google: "yehPcw5ESWZp48ves1OHjvjHzUY_Vb_QlPVxKPcoWNg",
+  },
+
+  icons: {
+    icon: "/logo.webp",
+    shortcut: "/logo.webp",
+    apple: "/logo.webp",
+  },
+
+  openGraph: {
+    title: "NestGo — Enterprise Backend Architecture for Go",
+    description:
+      "A production-grade, modular, and high-performance backend framework for Go inspired by NestJS.",
+    images: [
+      {
+        url: "/logo.webp",
+        width: 512,
+        height: 512,
+        alt: "NestGo Logo",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "NestGo — Enterprise Backend Architecture for Go",
+    description:
+      "A production-grade, modular, and high-performance backend framework for Go inspired by NestJS.",
+    images: ["/logo.webp"],
+  },
 };
 
 export default function RootLayout({
@@ -29,7 +57,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased overflow-x-hidden`}>
+      <body
+        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased overflow-x-hidden`}
+      >
         {children}
       </body>
     </html>
