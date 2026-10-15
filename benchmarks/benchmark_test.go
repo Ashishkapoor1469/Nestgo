@@ -66,7 +66,7 @@ func BenchmarkGin_Router(b *testing.B) {
 func BenchmarkChi_Router(b *testing.B) {
 	router := chi.NewRouter()
 	router.Get("/test/hello", func(w http.ResponseWriter, r *http.Request) {
-		w.Write(helloWorldBytes)
+		_, _ = w.Write(helloWorldBytes)
 	})
 
 	w := httptest.NewRecorder()
@@ -91,6 +91,6 @@ func BenchmarkFiber_Router(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		app.Test(req)
+		_, _ = app.Test(req)
 	}
 }
