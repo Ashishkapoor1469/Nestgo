@@ -63,7 +63,7 @@ func main() {
 
 	// 2. Middleware instances
 	messageRateLimiter := middleware.NewRateLimiter(5, 10*time.Second).WithStore(rateStore)
-	historyCache := middleware.NewCache(30*time.Second).WithStore(cacheStore).WithTags("history")
+	historyCache := middleware.NewCache(30 * time.Second).WithStore(cacheStore).WithTags("history")
 
 	// 3. Create NestGo App
 	app := core.New(
@@ -84,7 +84,7 @@ func main() {
 		messageRateLimiter:     messageRateLimiter,
 	}
 	app.RegisterModule(&ChatModule{
-		apiController:          apiController,
+		apiController: apiController,
 	})
 
 	// 6. Register gRPC Service Registrar
@@ -186,7 +186,7 @@ func setupWebSocket(gw *ws.Gateway, cacheStore middleware.CacheStore) {
 
 // ChatModule holds routing setup
 type ChatModule struct {
-	apiController          *ApiController
+	apiController *ApiController
 }
 
 func (m *ChatModule) Module() common.ModuleConfig {
