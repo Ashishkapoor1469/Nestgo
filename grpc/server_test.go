@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"log/slog"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -9,11 +10,11 @@ import (
 )
 
 type mockRegistrar struct {
-	called bool
+	called atomic.Bool
 }
 
 func (m *mockRegistrar) RegisterGRPC(server *grpc.Server) {
-	m.called = true
+	m.called.Store(true)
 }
 
 func TestGRPCServer_Lifecycle(t *testing.T) {
@@ -32,7 +33,7 @@ func TestGRPCServer_Lifecycle(t *testing.T) {
 	// Wait a short duration to ensure server starts and calls register.
 	time.Sleep(100 * time.Millisecond)
 
-	if !reg.called {
+	if !reg.called.Load() {
 		t.Error("Expected RegisterGRPC to be called during Start()")
 	}
 
