@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -203,9 +204,36 @@ func (c *Context) BearerToken() string {
 	return ""
 }
 
-// RequestID returns the unique request ID.
+// RequestID returns a sanitized request ID suitable for logs.
 func (c *Context) RequestID() string {
-	return c.Header("X-Request-ID")
+	return sanitizeRequestID(c.Header("X-Request-ID"))
+}
+
+// sanitizeRequestID constrains request IDs to a safe subset before logging.
+func sanitizeRequestID(id string) string {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return "unknown"
+	}
+
+	const maxLen = 128
+	var b strings.Builder
+	b.Grow(len(id))
+
+	for _, r := range id {
+		if b.Len() >= maxLen {
+			break
+		}
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' || r == '.' || r == ':' {
+			b.WriteRune(r)
+		}
+	}
+
+	safe := b.String()
+	if safe == "" {
+		return "unknown"
+	}
+	return safe
 }
 
 // User returns the authenticated user ID from the context (set by auth guard).
