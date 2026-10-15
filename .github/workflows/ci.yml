@@ -90,6 +90,8 @@ jobs:
         run: |
           nestgo new e2e-test-app
           cd e2e-test-app
+          go mod edit -replace github.com/Ashishkapoor1469/Nestgo=../
+          go mod tidy
           go build ./...
         
       - name: Test Resource Generation
