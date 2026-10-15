@@ -162,7 +162,7 @@ var goModTemplate = `module {{.ModuleName}}
 go 1.22
 
 require (
-	github.com/Ashishkapoor1469/Nestgo v0.6.0
+	github.com/Ashishkapoor1469/Nestgo v0.5.0
 )
 `
 
