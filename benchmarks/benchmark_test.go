@@ -66,7 +66,9 @@ func BenchmarkGin_Router(b *testing.B) {
 func BenchmarkChi_Router(b *testing.B) {
 	router := chi.NewRouter()
 	router.Get("/test/hello", func(w http.ResponseWriter, r *http.Request) {
-		w.Write(helloWorldBytes)
+		if _, err := w.Write(helloWorldBytes); err != nil {
+			b.Fatalf("failed to write response: %v", err)
+		}
 	})
 
 	w := httptest.NewRecorder()
@@ -91,6 +93,8 @@ func BenchmarkFiber_Router(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		app.Test(req)
+		if _, err := app.Test(req); err != nil {
+			b.Fatalf("fiber test request failed: %v", err)
+		}
 	}
 }

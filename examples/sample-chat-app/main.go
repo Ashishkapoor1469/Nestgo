@@ -356,11 +356,13 @@ func _PingService_Ping_Handler(srv any, ctx context.Context, dec func(any) error
 }
 
 func callGRPCPing(addr string, msg string) (string, error) {
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return "", err
 	}
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	req := &PingRequest{Message: msg}
 	res := new(PingResponse)
