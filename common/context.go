@@ -255,9 +255,6 @@ func (c *Context) Logger() *slog.Logger {
 	}
 
 	reqID := "unknown"
-	if rctx := chi.RouteContext(c.Request.Context()); rctx != nil && rctx.RoutePattern() != "" {
-		// keep reqID as unknown when only route context data is present
-	}
 	if rctx := chi.RouteContext(c.Request.Context()); rctx != nil {
 		if id := sanitizeRequestID(rctx.URLParam("requestID")); id != "unknown" {
 			reqID = id
